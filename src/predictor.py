@@ -29,16 +29,27 @@ def predict(data: dict):
     transformed = preprocessor.transform(df)
     shap_values = explainer(transformed)
 
-    try:
-        feature_names = preprocessor.get_feature_names_out()
-    except:
-        feature_names = [f"feature_{i}" for i in range(transformed.shape[1])]
+    values = shap_values.values[0]
 
-    shap_pairs = list(zip(feature_names, shap_values.values[0]))
+    # 🔥 MANUAL FEATURE GROUPING (SAFE + RELIABLE)
+    feature_map = [
+        "Age","Income","LoanAmount","CreditScore","MonthsEmployed",
+        "NumCreditLines","InterestRate","LoanTerm","DTIRatio",
+        "Education","EmploymentType","MaritalStatus",
+        "HasMortgage","HasDependents","LoanPurpose","HasCoSigner",
+        "Loan_to_Income","Credit_per_Line","Income_per_Employment",
+        "Interest_Burden","High_DTI_Flag","Low_Credit_Flag"
+    ]
 
-    shap_pairs = sorted(shap_pairs, key=lambda x: abs(x[1]), reverse=True)
+    mapped = []
 
-    top_5 = shap_pairs[:5]
+    for i in range(min(len(values), len(feature_map))):
+        mapped.append((feature_map[i], values[i]))
+
+    # Sort by importance
+    mapped = sorted(mapped, key=lambda x: abs(x[1]), reverse=True)
+
+    top_5 = mapped[:5]
 
     shap_dict = {}
 

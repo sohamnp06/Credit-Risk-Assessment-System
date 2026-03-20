@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { predictRisk } from "../services/api";
+import ShapChart from "../components/ShapChart";
 
 export default function NewAssessment() {
   const [formData, setFormData] = useState({
@@ -67,9 +68,9 @@ export default function NewAssessment() {
   };
 
   const getRiskLevel = (prob) => {
-    if (prob < 0.3) return "🟢 LOW RISK";
-    if (prob < 0.6) return "🟡 MEDIUM RISK";
-    return "🔴 HIGH RISK";
+    if (prob < 0.3) return { label: "🟢 LOW RISK", color: "text-green-600" };
+    if (prob < 0.6) return { label: "🟡 MEDIUM RISK", color: "text-yellow-500" };
+    return { label: "🔴 HIGH RISK", color: "text-red-600" };
   };
 
   const getPredictionText = (prediction) => {
@@ -82,6 +83,7 @@ export default function NewAssessment() {
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">New Assessment</h1>
 
+      {/* FORM */}
       <div className="grid grid-cols-2 gap-4 max-w-3xl">
 
         <input className="p-2 border rounded" name="Age" placeholder="Age" onChange={handleChange} />
@@ -138,6 +140,7 @@ export default function NewAssessment() {
 
       </div>
 
+      {/* BUTTON */}
       <button
         className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         onClick={handleSubmit}
@@ -145,21 +148,24 @@ export default function NewAssessment() {
         Predict Risk
       </button>
 
+      {/* ERROR */}
       {error && (
         <div className="mt-4 text-red-500 font-semibold">
           {error}
         </div>
       )}
 
+      {/* RESULT */}
       {result && result.probability !== undefined && (
-        <div className="mt-6 bg-white p-5 rounded-xl shadow w-96">
+        <div className="mt-6 bg-white p-5 rounded-xl shadow w-[600px]">
+
           <h2 className="text-xl font-bold mb-2">Assessment Result</h2>
 
-          <p className="font-bold text-lg">
-            {getRiskLevel(result.probability)}
+          <p className={`font-bold text-lg ${getRiskLevel(result.probability).color}`}>
+            {getRiskLevel(result.probability).label}
           </p>
 
-          <p>
+          <p className="text-gray-700">
             {(result.probability * 100).toFixed(2)}% default
           </p>
 
@@ -167,17 +173,30 @@ export default function NewAssessment() {
             {getPredictionText(result.prediction)}
           </p>
 
+          {/* BOTH TEXT + GRAPH */}
           {result.shap_values && (
-            <div className="mt-4">
-              <h3 className="font-bold mb-2">Top Risk Factors</h3>
+            <div className="mt-6 grid grid-cols-2 gap-6">
 
-              {Object.entries(result.shap_values).map(([feature, value]) => (
-                <p key={feature}>
-                  <span className="font-semibold">{feature}</span>: {value}
-                </p>
-              ))}
+              {/* TEXT EXPLANATION */}
+              <div>
+                <h3 className="font-bold mb-3">Top Risk Factors</h3>
+
+                {Object.entries(result.shap_values).map(([feature, value]) => (
+                  <p key={feature} className="mb-1">
+                    <span className="font-semibold">{feature}</span>: {value}
+                  </p>
+                ))}
+              </div>
+
+              {/* GRAPH */}
+              <div>
+                <h3 className="font-bold mb-3">Visual Impact</h3>
+                <ShapChart shapData={result.shap_values} />
+              </div>
+
             </div>
           )}
+
         </div>
       )}
     </div>
