@@ -27,7 +27,7 @@ def get_prediction():
 
         print("Incoming Data:", data)
 
-        prediction, prob = predict(data)
+        prediction, prob, shap_values = predict(data)
 
         print("Prediction:", prediction, "Probability:", prob)
 
@@ -37,7 +37,8 @@ def get_prediction():
 
         return jsonify({
             "prediction": int(prediction),
-            "probability": float(prob)
+            "probability": float(prob),
+            "shap_values": shap_values
         })
 
     except Exception as e:

@@ -32,8 +32,6 @@ export default function NewAssessment() {
   };
 
   const handleSubmit = async () => {
-    console.log("Button clicked");
-
     setError("");
     setResult(null);
 
@@ -54,11 +52,7 @@ export default function NewAssessment() {
         HasCoSigner: Number(formData.HasCoSigner)
       };
 
-      console.log("Sending Data:", formattedData);
-
       const res = await predictRisk(formattedData);
-
-      console.log("API Response:", res);
 
       if (!res || res.error) {
         setError(res?.error || "No response from server");
@@ -68,7 +62,6 @@ export default function NewAssessment() {
       setResult(res);
 
     } catch (err) {
-      console.error("ERROR:", err);
       setError("Failed to connect to backend");
     }
   };
@@ -152,14 +145,12 @@ export default function NewAssessment() {
         Predict Risk
       </button>
 
-      {/* ERROR DISPLAY */}
       {error && (
         <div className="mt-4 text-red-500 font-semibold">
           {error}
         </div>
       )}
 
-      {/* RESULT */}
       {result && result.probability !== undefined && (
         <div className="mt-6 bg-white p-5 rounded-xl shadow w-96">
           <h2 className="text-xl font-bold mb-2">Assessment Result</h2>
@@ -175,6 +166,18 @@ export default function NewAssessment() {
           <p className="mt-2 font-semibold">
             {getPredictionText(result.prediction)}
           </p>
+
+          {result.shap_values && (
+            <div className="mt-4">
+              <h3 className="font-bold mb-2">Top Risk Factors</h3>
+
+              {Object.entries(result.shap_values).map(([feature, value]) => (
+                <p key={feature}>
+                  <span className="font-semibold">{feature}</span>: {value}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
