@@ -12,6 +12,26 @@ dist
 dist-ssr
 *.local
 
+# Node
+node_modules/
+npm-debug.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Env files
+.env
+
+# Build
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

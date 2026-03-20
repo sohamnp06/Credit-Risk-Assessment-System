@@ -14,6 +14,9 @@ def insert_prediction(data, prediction, probability):
     conn = get_connection()
     cursor = conn.cursor()
 
+    prediction = int(prediction)
+    probability = float(probability)
+
     cursor.execute("""
         INSERT INTO predictions (
             age, income, loan_amount, credit_score,
@@ -26,22 +29,22 @@ def insert_prediction(data, prediction, probability):
         )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (
-        data.get("Age"),
-        data.get("Income"),
-        data.get("LoanAmount"),
-        data.get("CreditScore"),
-        data.get("MonthsEmployed"),
-        data.get("NumCreditLines"),
-        data.get("InterestRate"),
-        data.get("LoanTerm"),
-        data.get("DTIRatio"),
+        int(data.get("Age")),
+        float(data.get("Income")),
+        float(data.get("LoanAmount")),
+        float(data.get("CreditScore")),
+        int(data.get("MonthsEmployed")),
+        int(data.get("NumCreditLines")),
+        float(data.get("InterestRate")),
+        int(data.get("LoanTerm")),
+        float(data.get("DTIRatio")),
         data.get("Education"),
         data.get("EmploymentType"),
         data.get("MaritalStatus"),
-        data.get("HasMortgage"),
-        data.get("HasDependents"),
+        int(data.get("HasMortgage")),
+        int(data.get("HasDependents")),
         data.get("LoanPurpose"),
-        data.get("HasCoSigner"),
+        int(data.get("HasCoSigner")),
         prediction,
         probability
     ))

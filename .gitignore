@@ -25,6 +25,26 @@ ENV/
 # =========================
 .ipynb_checkpoints/
 
+# Node
+node_modules/
+npm-debug.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Env files
+.env
+
+# Build
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # =========================
 # Data Files
 # =========================
