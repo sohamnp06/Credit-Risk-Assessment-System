@@ -11,3 +11,8 @@ export const predictRisk = async (data) => {
 
   return response.json();
 };
+
+export const getDashboardData = async () => {
+  const response = await fetch(`${BASE_URL}/dashboard`);
+  return response.json();
+};

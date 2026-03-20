@@ -11,6 +11,17 @@ CORS(app)
 def home():
     return "Credit Risk API Running (PostgreSQL Connected)"
 
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    try:
+        from database.db import get_dashboard_data
+
+        data = get_dashboard_data()
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route('/predict', methods=['GET', 'POST'])
 def get_prediction():

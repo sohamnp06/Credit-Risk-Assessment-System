@@ -7,13 +7,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-export default function RiskDistributionChart() {
-
-  const data = [
-    { risk: "Low", count: 40 },
-    { risk: "Medium", count: 50 },
-    { risk: "High", count: 30 }
-  ];
+export default function RiskDistributionChart({ data }) {
 
   return (
     <div className="bg-white p-4 rounded-xl shadow w-full">
@@ -21,7 +15,7 @@ export default function RiskDistributionChart() {
 
       <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
-          <BarChart data={data}>
+          <BarChart data={data || []}>
             <XAxis dataKey="risk" />
             <YAxis />
             <Tooltip />

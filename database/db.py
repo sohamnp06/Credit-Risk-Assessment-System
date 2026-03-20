@@ -1,54 +1,107 @@
 import psycopg2
+import os
 
 def get_connection():
     return psycopg2.connect(
         host="localhost",
         database="credit_risk_db",
         user="postgres",
-        password="root",
-        port="5432"
+        password="root"
     )
-
 
 def insert_prediction(data, prediction, probability):
     conn = get_connection()
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    prediction = int(prediction)
-    probability = float(probability)
+    query = """
+    INSERT INTO predictions (
+        age, income, loanamount, creditscore, monthsemployed,
+        numcreditlines, interestrate, loanterm, dtiratio,
+        education, employmenttype, maritalstatus,
+        hasmortgage, hasdependents, loanpurpose, hascosigner,
+        prediction, probability
+    )
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
 
-    cursor.execute("""
-        INSERT INTO predictions (
-            age, income, loan_amount, credit_score,
-            months_employed, num_credit_lines,
-            interest_rate, loan_term, dti_ratio,
-            education, employment_type, marital_status,
-            has_mortgage, has_dependents,
-            loan_purpose, has_cosigner,
-            prediction, probability
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (
-        int(data.get("Age")),
-        float(data.get("Income")),
-        float(data.get("LoanAmount")),
-        float(data.get("CreditScore")),
-        int(data.get("MonthsEmployed")),
-        int(data.get("NumCreditLines")),
-        float(data.get("InterestRate")),
-        int(data.get("LoanTerm")),
-        float(data.get("DTIRatio")),
-        data.get("Education"),
-        data.get("EmploymentType"),
-        data.get("MaritalStatus"),
-        int(data.get("HasMortgage")),
-        int(data.get("HasDependents")),
-        data.get("LoanPurpose"),
-        int(data.get("HasCoSigner")),
-        prediction,
-        probability
-    ))
+    values = (
+        data['Age'],
+        data['Income'],
+        data['LoanAmount'],
+        data['CreditScore'],
+        data['MonthsEmployed'],
+        data['NumCreditLines'],
+        data['InterestRate'],
+        data['LoanTerm'],
+        data['DTIRatio'],
+        data['Education'],
+        data['EmploymentType'],
+        data['MaritalStatus'],
+        data['HasMortgage'],
+        data['HasDependents'],
+        data['LoanPurpose'],
+        data['HasCoSigner'],
+        int(prediction),
+        float(probability)
+    )
 
+    cur.execute(query, values)
     conn.commit()
-    cursor.close()
+
+    cur.close()
     conn.close()
+    
+def get_dashboard_data():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Total applications
+    cur.execute("SELECT COUNT(*) FROM predictions;")
+    total = cur.fetchone()[0]
+
+    # Default count (prediction = 1)
+    cur.execute("SELECT COUNT(*) FROM predictions WHERE prediction = 1;")
+    defaults = cur.fetchone()[0]
+
+    # Avg probability
+    cur.execute("SELECT AVG(probability) FROM predictions;")
+    avg_prob = cur.fetchone()[0] or 0
+
+    # Approval rate (prediction = 0)
+    approval_rate = 0
+    if total > 0:
+        approval_rate = round(((total - defaults) / total) * 100, 2)
+
+    default_rate = 0
+    if total > 0:
+        default_rate = round((defaults / total) * 100, 2)
+
+    # Risk distribution
+    cur.execute("""
+        SELECT 
+            CASE 
+                WHEN probability < 0.3 THEN 'Low'
+                WHEN probability < 0.6 THEN 'Medium'
+                ELSE 'High'
+            END AS risk,
+            COUNT(*)
+        FROM predictions
+        GROUP BY risk;
+    """)
+
+    risk_rows = cur.fetchall()
+
+    risk_distribution = [
+        {"risk": row[0], "count": row[1]} for row in risk_rows
+    ]
+
+    cur.close()
+    conn.close()
+
+    return {
+        "total": total,
+        "approval_rate": approval_rate,
+        "default_rate": default_rate,
+        "avg_risk": round(avg_prob, 2),
+        "risk_distribution": risk_distribution
+    }
