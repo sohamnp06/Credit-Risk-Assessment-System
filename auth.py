@@ -31,6 +31,11 @@ def signup():
         conn = get_db_connection()
         cur = conn.cursor()
 
+        # Check if user exists
+        cur.execute("SELECT id FROM users WHERE email=%s", (email,))
+        if cur.fetchone():
+            return jsonify({"error": "User with this email already exists"}), 200
+
         cur.execute("""
             INSERT INTO users (name, email, password, role)
             VALUES (%s, %s, %s, %s)
@@ -40,10 +45,11 @@ def signup():
         cur.close()
         conn.close()
 
-        return jsonify({"message": "User created successfully"})
+        return jsonify({"message": "User created successfully"}), 201
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        print(f"Signup error: {e}")
+        return jsonify({"error": "Failed to create user. Please try again later."}), 500
 
 # =====================
 # LOGIN

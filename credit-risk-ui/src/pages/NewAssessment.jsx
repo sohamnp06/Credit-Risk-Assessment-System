@@ -24,6 +24,7 @@ export default function NewAssessment() {
 
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -35,6 +36,7 @@ export default function NewAssessment() {
   const handleSubmit = async () => {
     setError("");
     setResult(null);
+    setLoading(true);
 
     try {
       const formattedData = {
@@ -61,13 +63,13 @@ export default function NewAssessment() {
       }
 
       setResult(res);
-
     } catch (err) {
-      setError("Failed to connect to backend");
+      setError("Failed to connect to backend. Please ensure the server is running.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔥 DOWNLOAD PDF FUNCTION
   const handleDownload = async () => {
     try {
       const res = await fetch("http://localhost:5000/download-report", {
@@ -79,16 +81,15 @@ export default function NewAssessment() {
           prediction: result.prediction === 1 ? "Default" : "Safe",
           probability: result.probability,
           shap_values: result.shap_values,
-          features: formData   // ✅ IMPORTANT
+          features: formData
         })
       });
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
-      a.download = "credit_risk_report.pdf";
+      a.download = `Report_#${Date.now()}.pdf`;
       a.click();
     } catch (err) {
       console.error("Download failed", err);
@@ -96,143 +97,173 @@ export default function NewAssessment() {
   };
 
   const getRiskLevel = (prob) => {
-    if (prob < 0.3) return { label: "🟢 LOW RISK", color: "text-green-600" };
-    if (prob < 0.6) return { label: "🟡 MEDIUM RISK", color: "text-yellow-500" };
-    return { label: "🔴 HIGH RISK", color: "text-red-600" };
+    if (prob < 0.3) return { label: "SAFE / LOW RISK", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" };
+    if (prob < 0.6) return { label: "MEDIUM RISK", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" };
+    return { label: "CRITICAL / HIGH RISK", color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" };
   };
 
-  const getPredictionText = (prediction) => {
-    return prediction === 1
-      ? "❌ Loan Defaulter"
-      : "✅ Creditworthy Customer";
-  };
+  const InputField = ({ name, placeholder, type = "number" }) => (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest pl-1">{placeholder}</label>
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder}
+        onChange={handleChange}
+        className="bg-[#1e293b] border border-white/5 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-600 text-sm"
+      />
+    </div>
+  );
+
+  const SelectField = ({ name, label, options }) => (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest pl-1">{label}</label>
+      <select
+        name={name}
+        onChange={handleChange}
+        className="bg-[#1e293b] border border-white/5 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer text-sm"
+      >
+        {options.map(opt => (
+          <option key={typeof opt === 'object' ? opt.value : opt} value={typeof opt === 'object' ? opt.value : opt} className="bg-[#1e293b]">
+            {typeof opt === 'object' ? opt.label : opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">New Assessment</h1>
+    <div className="p-8 md:p-10 font-sans min-h-screen bg-[#0f172a]">
 
-      {/* FORM */}
-      <div className="grid grid-cols-2 gap-4 max-w-3xl">
-
-        <input className="p-2 border rounded" name="Age" placeholder="Age" onChange={handleChange} />
-        <input className="p-2 border rounded" name="Income" placeholder="Income" onChange={handleChange} />
-        <input className="p-2 border rounded" name="LoanAmount" placeholder="Loan Amount" onChange={handleChange} />
-        <input className="p-2 border rounded" name="CreditScore" placeholder="Credit Score" onChange={handleChange} />
-        <input className="p-2 border rounded" name="MonthsEmployed" placeholder="Months Employed" onChange={handleChange} />
-        <input className="p-2 border rounded" name="NumCreditLines" placeholder="Credit Lines" onChange={handleChange} />
-        <input className="p-2 border rounded" name="InterestRate" placeholder="Interest Rate" onChange={handleChange} />
-        <input className="p-2 border rounded" name="LoanTerm" placeholder="Loan Term" onChange={handleChange} />
-        <input className="p-2 border rounded" name="DTIRatio" placeholder="DTI Ratio" onChange={handleChange} />
-
-        <select className="p-2 border rounded" name="Education" onChange={handleChange}>
-          <option>High School</option>
-          <option>Bachelor</option>
-          <option>Master</option>
-          <option>PhD</option>
-        </select>
-
-        <select className="p-2 border rounded" name="EmploymentType" onChange={handleChange}>
-          <option>Salaried</option>
-          <option>Self-Employed</option>
-          <option>Unemployed</option>
-        </select>
-
-        <select className="p-2 border rounded" name="MaritalStatus" onChange={handleChange}>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Divorced</option>
-        </select>
-
-        <select className="p-2 border rounded" name="LoanPurpose" onChange={handleChange}>
-          <option>Home</option>
-          <option>Auto</option>
-          <option>Education</option>
-          <option>Business</option>
-          <option>Other</option>
-        </select>
-
-        <select className="p-2 border rounded" name="HasMortgage" onChange={handleChange}>
-          <option value={0}>No Mortgage</option>
-          <option value={1}>Has Mortgage</option>
-        </select>
-
-        <select className="p-2 border rounded" name="HasDependents" onChange={handleChange}>
-          <option value={0}>No Dependents</option>
-          <option value={1}>Has Dependents</option>
-        </select>
-
-        <select className="p-2 border rounded" name="HasCoSigner" onChange={handleChange}>
-          <option value={0}>No Co-Signer</option>
-          <option value={1}>Has Co-Signer</option>
-        </select>
-
+      {/* ── Header ── */}
+      <div className="mb-10">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-emerald-500 rounded-full"></div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">New Risk Assessment</h1>
+        </div>
+        <p className="text-slate-400 text-sm ml-5">
+          Generate an AI-powered credit risk prediction by providing loan and applicant details.
+        </p>
       </div>
 
-      {/* BUTTON */}
-      <button
-        className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        onClick={handleSubmit}
-      >
-        Predict Risk
-      </button>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        {/* ── Left: Form Section ── */}
+        <div className="xl:col-span-2 bg-[#1e293b] rounded-2xl p-8 border border-white/5 shadow-2xl overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
 
-      {/* ERROR */}
-      {error && (
-        <div className="mt-4 text-red-500 font-semibold">
-          {error}
-        </div>
-      )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
+            <InputField name="Age" placeholder="Applicant Age" />
+            <InputField name="Income" placeholder="Annual Income (USD)" />
+            <InputField name="LoanAmount" placeholder="Loan Amount (USD)" />
+            <InputField name="CreditScore" placeholder="Credit Score" />
+            <InputField name="MonthsEmployed" placeholder="Employment Duration (Months)" />
+            <InputField name="NumCreditLines" placeholder="Existing Credit Lines" />
+            <InputField name="InterestRate" placeholder="Proposed Interest Rate (%)" />
+            <InputField name="LoanTerm" placeholder="Loan Term (Months)" />
+            <InputField name="DTIRatio" placeholder="DTI Ratio" />
 
-      {/* RESULT */}
-      {result && result.probability !== undefined && (
-        <div className="mt-6 bg-white p-5 rounded-xl shadow w-[650px]">
+            <SelectField name="Education" label="Education Level" options={["High School", "Bachelor", "Master", "PhD"]} />
+            <SelectField name="EmploymentType" label="Employment Type" options={["Salaried", "Self-Employed", "Unemployed"]} />
+            <SelectField name="MaritalStatus" label="Marital Status" options={["Single", "Married", "Divorced"]} />
+            <SelectField name="LoanPurpose" label="Loan Purpose" options={["Home", "Auto", "Education", "Business", "Other"]} />
+            
+            <SelectField 
+              name="HasMortgage" 
+              label="Existing Mortgage" 
+              options={[{label: "No", value: 0}, {label: "Yes", value: 1}]} 
+            />
+            <SelectField 
+              name="HasDependents" 
+              label="Dependents" 
+              options={[{label: "No", value: 0}, {label: "Yes", value: 1}]} 
+            />
+          </div>
 
-          <h2 className="text-xl font-bold mb-2">Assessment Result</h2>
-
-          <p className={`font-bold text-lg ${getRiskLevel(result.probability).color}`}>
-            {getRiskLevel(result.probability).label}
-          </p>
-
-          <p className="text-gray-700">
-            {(result.probability * 100).toFixed(2)}% default
-          </p>
-
-          <p className="mt-2 font-semibold">
-            {getPredictionText(result.prediction)}
-          </p>
-
-          {/* 🔥 DOWNLOAD BUTTON */}
           <button
-            onClick={handleDownload}
-            className="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+            onClick={handleSubmit}
+            disabled={loading}
+            className={`w-full py-4 rounded-xl font-bold text-white transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 ${
+              loading 
+                ? "bg-blue-600/50 cursor-not-allowed text-slate-300" 
+                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/20"
+            }`}
           >
-            Download Report
+            {loading ? (
+              <>
+                <div className="animate-spin w-5 h-5 border-2 border-white/50 border-t-white rounded-full"></div>
+                Processing Assessment...
+              </>
+            ) : (
+              <>🚀 Generate Risk Profile</>
+            )}
           </button>
 
-          {/* SHAP */}
-          {result.shap_values && (
-            <div className="mt-6 grid grid-cols-2 gap-6">
-
-              <div>
-                <h3 className="font-bold mb-3">Top Risk Factors</h3>
-
-                {Object.entries(result.shap_values).map(([feature, value]) => (
-                  <p key={feature} className="mb-1">
-                    <span className="font-semibold">{feature}</span>: {value}
-                  </p>
-                ))}
-              </div>
-
-              <div>
-                <h3 className="font-bold mb-3">Visual Impact</h3>
-                <ShapChart shapData={result.shap_values} />
-              </div>
-
+          {error && (
+            <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm rounded-xl font-medium animate-pulse">
+              ⚠️ {error}
             </div>
           )}
-
         </div>
-      )}
+
+        {/* ── Right: Result Section ── */}
+        <div className="flex flex-col gap-6">
+          {!result ? (
+            <div className="flex-1 min-h-[400px] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600 p-8 text-center bg-[#1e293b]/30">
+              <div className="text-5xl mb-4 opacity-20 font-bold tracking-tight">AI</div>
+              <p className="text-sm font-medium">Ready for real-time risk evaluation</p>
+              <p className="text-xs mt-1 opacity-60">Complete the form to generate model explanations and predictions.</p>
+            </div>
+          ) : (
+            <div className="bg-[#1e293b] rounded-2xl border border-white/5 p-8 shadow-2xl relative overflow-hidden animate-in fade-in slide-in-from-right-5 duration-700">
+               <div className={`absolute top-0 right-0 w-24 h-1 ${getRiskLevel(result.probability).color.replace('text-', 'bg-')}`}></div>
+
+              <div className="mb-6 flex items-center justify-between">
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${getRiskLevel(result.probability).bg} ${getRiskLevel(result.probability).color} border ${getRiskLevel(result.probability).border}`}>
+                  {getRiskLevel(result.probability).label}
+                </span>
+                <span className="text-slate-500 text-xs font-mono font-bold"># {Date.now().toString().slice(-6)}</span>
+              </div>
+
+              <div className="mb-8">
+                <div className="text-5xl font-black text-white mb-2">
+                  {(result.probability * 100).toFixed(1)}% <span className="text-lg text-slate-500 font-medium">Probability</span>
+                </div>
+                <p className={`text-lg font-bold ${result.prediction === 1 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {result.prediction === 1 ? '❌ High Risk: Defaulter Likely' : '✅ Verified: Creditworthy'}
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Risk Explained (SHAP)</h3>
+                   <div className="grid grid-cols-1 gap-3 mb-6">
+                      {Object.entries(result.shap_values || {}).slice(0, 4).map(([f, v]) => (
+                        <div key={f} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
+                          <span className="text-slate-300 text-xs font-medium">{f}</span>
+                          <span className={`text-xs font-bold font-mono ${v > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {v > 0 ? '+' : ''}{v.toFixed(3)}
+                          </span>
+                        </div>
+                      ))}
+                   </div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/5 overflow-hidden">
+                      <ShapChart shapData={result.shap_values} />
+                   </div>
+                </div>
+
+                <button
+                  onClick={handleDownload}
+                  className="w-full py-3.5 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  📄 Download Detailed PDF Report
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }

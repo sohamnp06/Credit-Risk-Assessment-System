@@ -33,10 +33,10 @@ function App() {
           path="/*"
           element={
             <ProtectedRoute>
-              <div className="flex">
+              <div className="flex min-h-screen bg-[#0f172a]">
                 <Sidebar />
 
-                <div className="flex-1">
+                <div className="flex-1 overflow-auto">
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/new" element={<NewAssessment />} />

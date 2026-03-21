@@ -197,7 +197,10 @@ def prediction_history():
 def model_metrics():
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
+        # Try root directory first, then fallback to credit-risk-ui folder
         metrics_path = os.path.join(base_dir, "metrics.json")
+        if not os.path.exists(metrics_path):
+            metrics_path = os.path.join(base_dir, "credit-risk-ui", "metrics.json")
 
         with open(metrics_path, "r") as f:
             metrics = json.load(f)
