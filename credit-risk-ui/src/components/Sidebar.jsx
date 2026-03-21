@@ -20,10 +20,15 @@ export default function Sidebar() {
           </Link>
         </li>
 
-        {/* ✅ NEW PAGE */}
         <li>
           <Link to="/model" className="hover:text-blue-400">
             About Model
+          </Link>
+        </li>
+
+        <li>
+          <Link to="/history" className="hover:text-blue-400">
+            History
           </Link>
         </li>
 

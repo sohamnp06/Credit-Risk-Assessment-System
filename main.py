@@ -89,6 +89,54 @@ def approval_trend():
 
     return jsonify(result)
 
+@app.route("/prediction-history", methods=["GET"])
+def prediction_history():
+    try:
+        import psycopg2
+        import os
+        from flask import jsonify
+
+        conn = psycopg2.connect(
+            dbname="credit_risk_db",
+            user="postgres",
+            password="root",
+            host="localhost",
+            port="5432"
+        )
+
+        cursor = conn.cursor()
+
+        query = """
+        SELECT 
+            id,
+            prediction,
+            probability,
+            created_at
+        FROM predictions
+        ORDER BY created_at DESC
+        LIMIT 100;
+        """
+
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        data = []
+        for row in rows:
+            data.append({
+                "id": row[0],
+                "prediction": row[1],
+                "probability": float(row[2]),
+                "created_at": row[3]
+            })
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
 @app.route("/model-metrics", methods=["GET"])
 def model_metrics():
     try:
