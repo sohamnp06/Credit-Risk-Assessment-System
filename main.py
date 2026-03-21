@@ -4,10 +4,13 @@ from database.db import insert_prediction, get_connection
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from auth import auth
-
 import os
 import json
 import io
+from dotenv import load_dotenv
+
+# Load .env
+load_dotenv()
 
 # PDF
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
@@ -17,7 +20,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 app = Flask(__name__)
 CORS(app)
 
-app.config["JWT_SECRET_KEY"] = "super-secret-key"
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "super-secret-key")
 
 jwt = JWTManager(app)
 app.register_blueprint(auth, url_prefix="/auth")

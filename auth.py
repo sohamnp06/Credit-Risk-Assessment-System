@@ -2,16 +2,21 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 import psycopg2
 import bcrypt
+import os
+from dotenv import load_dotenv
+
+# Load .env
+load_dotenv()
 
 auth = Blueprint("auth", __name__)
 
 def get_db_connection():
     return psycopg2.connect(
-        dbname="credit_risk_db",
-        user="postgres",
-        password="root",
-        host="localhost",
-        port="5432"
+        host=os.getenv("DB_HOST", "localhost"),
+        database=os.getenv("DB_NAME", "credit_risk_db"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASS", "root"),
+        port=os.getenv("DB_PORT", "5432")
     )
 # =====================
 # SIGNUP

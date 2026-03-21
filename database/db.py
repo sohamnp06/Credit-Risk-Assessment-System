@@ -1,12 +1,18 @@
 import psycopg2
 import json
+import os
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
 
 def get_connection():
     return psycopg2.connect(
-        host="localhost",
-        database="credit_risk_db",
-        user="postgres",
-        password="root"
+        host=os.getenv("DB_HOST", "localhost"),
+        database=os.getenv("DB_NAME", "credit_risk_db"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASS", "root"),
+        port=os.getenv("DB_PORT", "5432")
     )
 
 # =========================

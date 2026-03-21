@@ -1,91 +1,75 @@
 # =========================
-# Python
+# 🚫 Environment & Secrets
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+credit-risk-ui/.env
+credit-risk-ui/.env.local
+
+# =========================
+# 🐍 Python
 # =========================
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
 *.py[cod]
-
-# =========================
-# Virtual Environments
-# =========================
-venv/
+*$py.class
+*.so
+.Python
 env/
-.venv/
-ENV/
-
-# =========================
-# Environment Variables
-# =========================
-.env
-
-# =========================
-# Jupyter Notebook
-# =========================
-.ipynb_checkpoints/
-
-# Node
-node_modules/
-npm-debug.log
-
-# Python
 venv/
-__pycache__/
-*.pyc
-
-# Env files
-.env
-
-# Build
-dist/
+.venv/
 build/
-
-# OS files
-.DS_Store
-Thumbs.db
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # =========================
-# Data Files
+# 📦 Node / Frontend
+# =========================
+node_modules/
+credit-risk-ui/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# =========================
+# 🤖 Machine Learning
+# =========================
+models/*.pkl
+models/*.joblib
+completeXgboost.pkl
+metrics.json
+
+# =========================
+# 📊 Data & Reports
 # =========================
 data/*.csv
 data/*.xlsx
 data/*.json
+*.pdf
+credit_risk_report.pdf
 
 # =========================
-# Trained Models
-# =========================
-models/*.pkl
-models/*.joblib
-
-# =========================
-# Logs
-# =========================
-logs/
-*.log
-
-# =========================
-# IDE / Editor Files
+# 🖥️ IDEs & OS
 # =========================
 .vscode/
 .idea/
-
-# =========================
-# Operating System Files
-# =========================
 .DS_Store
 Thumbs.db
-
-# =========================
-# Python Packaging
-# =========================
-build/
-dist/
-*.egg-info/
-
-# =========================
-# Temporary Files
-# =========================
-*.tmp
 *.swp
 *.bak
+*.tmp
