@@ -2,6 +2,42 @@ import { useState } from "react";
 import { predictRisk } from "../services/api";
 import ShapChart from "../components/ShapChart";
 
+// ─── Input Components (Outside to prevent re-renders) ───────────────────────
+
+const InputField = ({ name, placeholder, value, onChange, type = "number" }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest pl-1">{placeholder}</label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      placeholder={placeholder}
+      onChange={onChange}
+      className="bg-[#1e293b] border border-white/5 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-600 text-sm"
+    />
+  </div>
+);
+
+const SelectField = ({ name, label, value, onChange, options }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest pl-1">{label}</label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="bg-[#1e293b] border border-white/5 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer text-sm"
+    >
+      {options.map(opt => (
+        <option key={typeof opt === 'object' ? opt.value : opt} value={typeof opt === 'object' ? opt.value : opt} className="bg-[#1e293b]">
+          {typeof opt === 'object' ? opt.label : opt}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+// ─── Main Component ─────────────────────────────────────────────────────────
+
 export default function NewAssessment() {
   const [formData, setFormData] = useState({
     Age: "",
@@ -102,36 +138,6 @@ export default function NewAssessment() {
     return { label: "CRITICAL / HIGH RISK", color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" };
   };
 
-  const InputField = ({ name, placeholder, type = "number" }) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest pl-1">{placeholder}</label>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        onChange={handleChange}
-        className="bg-[#1e293b] border border-white/5 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-600 text-sm"
-      />
-    </div>
-  );
-
-  const SelectField = ({ name, label, options }) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest pl-1">{label}</label>
-      <select
-        name={name}
-        onChange={handleChange}
-        className="bg-[#1e293b] border border-white/5 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer text-sm"
-      >
-        {options.map(opt => (
-          <option key={typeof opt === 'object' ? opt.value : opt} value={typeof opt === 'object' ? opt.value : opt} className="bg-[#1e293b]">
-            {typeof opt === 'object' ? opt.label : opt}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-
   return (
     <div className="p-8 md:p-10 font-sans min-h-screen bg-[#0f172a]">
 
@@ -153,30 +159,41 @@ export default function NewAssessment() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
-            <InputField name="Age" placeholder="Applicant Age" />
-            <InputField name="Income" placeholder="Annual Income (USD)" />
-            <InputField name="LoanAmount" placeholder="Loan Amount (USD)" />
-            <InputField name="CreditScore" placeholder="Credit Score" />
-            <InputField name="MonthsEmployed" placeholder="Employment Duration (Months)" />
-            <InputField name="NumCreditLines" placeholder="Existing Credit Lines" />
-            <InputField name="InterestRate" placeholder="Proposed Interest Rate (%)" />
-            <InputField name="LoanTerm" placeholder="Loan Term (Months)" />
-            <InputField name="DTIRatio" placeholder="DTI Ratio" />
+            <InputField name="Age" placeholder="Applicant Age" value={formData.Age} onChange={handleChange} />
+            <InputField name="Income" placeholder="Annual Income (USD)" value={formData.Income} onChange={handleChange} />
+            <InputField name="LoanAmount" placeholder="Loan Amount (USD)" value={formData.LoanAmount} onChange={handleChange} />
+            <InputField name="CreditScore" placeholder="Credit Score" value={formData.CreditScore} onChange={handleChange} />
+            <InputField name="MonthsEmployed" placeholder="Employment Duration (Months)" value={formData.MonthsEmployed} onChange={handleChange} />
+            <InputField name="NumCreditLines" placeholder="Existing Credit Lines" value={formData.NumCreditLines} onChange={handleChange} />
+            <InputField name="InterestRate" placeholder="Proposed Interest Rate (%)" value={formData.InterestRate} onChange={handleChange} />
+            <InputField name="LoanTerm" placeholder="Loan Term (Months)" value={formData.LoanTerm} onChange={handleChange} />
+            <InputField name="DTIRatio" placeholder="DTI Ratio" value={formData.DTIRatio} onChange={handleChange} />
 
-            <SelectField name="Education" label="Education Level" options={["High School", "Bachelor", "Master", "PhD"]} />
-            <SelectField name="EmploymentType" label="Employment Type" options={["Salaried", "Self-Employed", "Unemployed"]} />
-            <SelectField name="MaritalStatus" label="Marital Status" options={["Single", "Married", "Divorced"]} />
-            <SelectField name="LoanPurpose" label="Loan Purpose" options={["Home", "Auto", "Education", "Business", "Other"]} />
+            <SelectField name="Education" label="Education Level" value={formData.Education} options={["High School", "Bachelor", "Master", "PhD"]} onChange={handleChange} />
+            <SelectField name="EmploymentType" label="Employment Type" value={formData.EmploymentType} options={["Salaried", "Self-Employed", "Unemployed"]} onChange={handleChange} />
+            <SelectField name="MaritalStatus" label="Marital Status" value={formData.MaritalStatus} options={["Single", "Married", "Divorced"]} onChange={handleChange} />
+            <SelectField name="LoanPurpose" label="Loan Purpose" value={formData.LoanPurpose} options={["Home", "Auto", "Education", "Business", "Other"]} onChange={handleChange} />
             
             <SelectField 
               name="HasMortgage" 
               label="Existing Mortgage" 
+              value={formData.HasMortgage}
               options={[{label: "No", value: 0}, {label: "Yes", value: 1}]} 
+              onChange={handleChange}
             />
             <SelectField 
               name="HasDependents" 
               label="Dependents" 
+              value={formData.HasDependents}
               options={[{label: "No", value: 0}, {label: "Yes", value: 1}]} 
+              onChange={handleChange}
+            />
+            <SelectField 
+                name="HasCoSigner" 
+                label="Co-Signer" 
+                value={formData.HasCoSigner}
+                options={[{label: "No", value: 0}, {label: "Yes", value: 1}]} 
+                onChange={handleChange}
             />
           </div>
 
@@ -242,7 +259,7 @@ export default function NewAssessment() {
                         <div key={f} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
                           <span className="text-slate-300 text-xs font-medium">{f}</span>
                           <span className={`text-xs font-bold font-mono ${v > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                            {v > 0 ? '+' : ''}{v.toFixed(3)}
+                            {v > 0 ? '+' : ''}{parseFloat(v).toFixed(3)}
                           </span>
                         </div>
                       ))}
