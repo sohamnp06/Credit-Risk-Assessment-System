@@ -36,9 +36,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# =========================
 # 📦 Node / Frontend
-# =========================
 node_modules/
 credit-risk-ui/node_modules/
 npm-debug.log*

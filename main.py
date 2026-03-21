@@ -8,14 +8,10 @@ import os
 import json
 import io
 from dotenv import load_dotenv
-
-# Load .env
-load_dotenv()
-
-# PDF
+import pickle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -25,18 +21,10 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "super-secret-key")
 jwt = JWTManager(app)
 app.register_blueprint(auth, url_prefix="/auth")
 
-
-# =========================
-# HOME
-# =========================
 @app.route('/')
 def home():
     return "Credit Risk API Running (PostgreSQL Connected)"
 
-
-# =========================
-# DASHBOARD
-# =========================
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     try:
@@ -46,10 +34,6 @@ def dashboard():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-
-# =========================
-# PREDICT
-# =========================
 @app.route('/predict', methods=['POST'])
 def get_prediction():
     try:
@@ -64,12 +48,11 @@ def get_prediction():
 
         print("Prediction:", prediction, "Probability:", prob)
 
-        # ✅ STORE EVERYTHING (IMPORTANT)
         insert_prediction(
-            data,                 # features
+            data,                 
             prediction,
             prob,
-            shap_values           # shap
+            shap_values          
         )
 
         return jsonify({
@@ -82,10 +65,6 @@ def get_prediction():
         print("ERROR:", str(e))
         return jsonify({"error": str(e)})
 
-
-# =========================
-# APPROVAL TREND
-# =========================
 @app.route('/approval-trend', methods=['GET'])
 def approval_trend():
     conn = get_connection()
@@ -117,10 +96,6 @@ def approval_trend():
 
     return jsonify(result)
 
-
-# =========================
-# HISTORY (UPDATED)
-# =========================
 @app.route("/prediction-history", methods=["GET"])
 def prediction_history():
     try:
@@ -181,8 +156,8 @@ def prediction_history():
                 "prediction": row[1],
                 "probability": float(row[2]),
                 "created_at": row[3],
-                "features": features,          # ✅ FIXED
-                "shap_values": shap_values     # ✅ FIXED
+                "features": features,          
+                "shap_values": shap_values     
             })
 
         cursor.close()
@@ -193,9 +168,6 @@ def prediction_history():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# =========================
-# MODEL METRICS
-# =========================
 @app.route("/model-metrics", methods=["GET"])
 def model_metrics():
     try:
@@ -214,9 +186,6 @@ def model_metrics():
         return jsonify({"error": str(e)})
 
 
-# =========================
-# PDF DOWNLOAD
-# =========================
 @app.route("/download-report", methods=["POST"])
 def download_report():
     data = request.json
@@ -232,25 +201,21 @@ def download_report():
 
     content = []
 
-    # TITLE
     content.append(Paragraph("Credit Risk Assessment Report", styles["Title"]))
     content.append(Spacer(1, 12))
 
-    # FEATURES
     content.append(Paragraph("User Input Features:", styles["Heading2"]))
     for key, value in features.items():
         content.append(Paragraph(f"{key}: {value}", styles["Normal"]))
 
     content.append(Spacer(1, 12))
 
-    # RESULT
     content.append(Paragraph("Prediction Result:", styles["Heading2"]))
     content.append(Paragraph(f"Prediction: {prediction}", styles["Normal"]))
     content.append(Paragraph(f"Probability: {round(probability*100,2)}%", styles["Normal"]))
 
     content.append(Spacer(1, 12))
-
-    # SHAP
+    
     content.append(Paragraph("SHAP Explanation:", styles["Heading2"]))
     for key, value in shap_values.items():
         content.append(Paragraph(f"{key}: {value}", styles["Normal"]))
@@ -265,9 +230,5 @@ def download_report():
         mimetype="application/pdf"
     )
 
-
-# =========================
-# RUN
-# =========================
 if __name__ == '__main__':
     app.run(debug=True)

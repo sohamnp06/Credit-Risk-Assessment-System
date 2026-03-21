@@ -70,7 +70,6 @@ function ConfusionMatrix({ data }) {
   );
 }
 
-// ─── Model Feature Card ───────────────────────────────────────────────────────
 function FeatureCard({ icon, title, desc }) {
   return (
     <div className="flex gap-3 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all">
@@ -83,7 +82,6 @@ function FeatureCard({ icon, title, desc }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AboutModel() {
   const [data, setData] = useState(DEFAULT_METRICS);
   const [loading, setLoading] = useState(false);
@@ -92,8 +90,6 @@ export default function AboutModel() {
 
   useEffect(() => {
     const loadData = async () => {
-      // First try to load from the dynamically ignored local file via fetch
-      // But for build safety, we primarily rely on fetchMetrics() and DEFAULT_METRICS
       fetchMetrics();
     };
     loadData();
@@ -108,7 +104,6 @@ export default function AboutModel() {
       setSource("api");
     } catch (err) {
       console.warn("Using default evaluation metrics:", err.message);
-      // Try to fetch metrics.json directly from public/root if it exists (for local dev)
       try {
           const directRes = await fetch("/metrics.json");
           const directData = await directRes.json();

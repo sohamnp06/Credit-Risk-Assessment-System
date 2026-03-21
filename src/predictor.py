@@ -31,7 +31,6 @@ def predict(data: dict):
 
     values = shap_values.values[0]
 
-    # 🔥 MANUAL FEATURE GROUPING (SAFE + RELIABLE)
     feature_map = [
         "Age","Income","LoanAmount","CreditScore","MonthsEmployed",
         "NumCreditLines","InterestRate","LoanTerm","DTIRatio",
@@ -46,7 +45,6 @@ def predict(data: dict):
     for i in range(min(len(values), len(feature_map))):
         mapped.append((feature_map[i], values[i]))
 
-    # Sort by importance
     mapped = sorted(mapped, key=lambda x: abs(x[1]), reverse=True)
 
     top_5 = mapped[:5]

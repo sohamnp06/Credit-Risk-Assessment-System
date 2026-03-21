@@ -3,7 +3,6 @@ import json
 import os
 from dotenv import load_dotenv
 
-# Load .env file
 load_dotenv()
 
 def get_connection():
@@ -15,9 +14,6 @@ def get_connection():
         port=os.getenv("DB_PORT", "5432")
     )
 
-# =========================
-# INSERT PREDICTION (UPDATED)
-# =========================
 def insert_prediction(data, prediction, probability, shap_values):
     conn = get_connection()
     cur = conn.cursor()
@@ -39,9 +35,6 @@ def insert_prediction(data, prediction, probability, shap_values):
             %s, %s, %s)
     """
 
-    # =========================
-    # DERIVED FEATURES
-    # =========================
     loan_to_income = data['LoanAmount'] / data['Income'] if data['Income'] != 0 else 0
     credit_per_line = data['CreditScore'] / data['NumCreditLines'] if data['NumCreditLines'] != 0 else 0
     income_per_employment = data['Income'] / data['MonthsEmployed'] if data['MonthsEmployed'] != 0 else 0
@@ -76,7 +69,7 @@ def insert_prediction(data, prediction, probability, shap_values):
         low_credit_flag,
         int(prediction),
         float(probability),
-        json.dumps(shap_values)   # ✅ NEW
+        json.dumps(shap_values)   
     )
 
     cur.execute(query, values)
@@ -85,10 +78,6 @@ def insert_prediction(data, prediction, probability, shap_values):
     cur.close()
     conn.close()
 
-
-# =========================
-# DASHBOARD DATA
-# =========================
 def get_dashboard_data():
     conn = get_connection()
     cur = conn.cursor()

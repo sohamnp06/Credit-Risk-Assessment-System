@@ -5,7 +5,6 @@ import bcrypt
 import os
 from dotenv import load_dotenv
 
-# Load .env
 load_dotenv()
 
 auth = Blueprint("auth", __name__)
@@ -18,9 +17,7 @@ def get_db_connection():
         password=os.getenv("DB_PASS", "root"),
         port=os.getenv("DB_PORT", "5432")
     )
-# =====================
-# SIGNUP
-# =====================
+
 @auth.route("/signup", methods=["POST"])
 def signup():
     data = request.json
@@ -36,7 +33,6 @@ def signup():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Check if user exists
         cur.execute("SELECT id FROM users WHERE email=%s", (email,))
         if cur.fetchone():
             return jsonify({"error": "User with this email already exists"}), 200
@@ -56,9 +52,6 @@ def signup():
         print(f"Signup error: {e}")
         return jsonify({"error": "Failed to create user. Please try again later."}), 500
 
-# =====================
-# LOGIN
-# =====================
 @auth.route("/login", methods=["POST"])
 def login():
     data = request.json

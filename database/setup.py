@@ -11,7 +11,6 @@ def setup_db():
         )
         cur = conn.cursor()
         
-        # Create users table if not exists
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -23,7 +22,6 @@ def setup_db():
             );
         """)
         
-        # Create predictions table if not exists (based on db.py)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS predictions (
                 id SERIAL PRIMARY KEY,

@@ -8,12 +8,12 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Sidebar from "./components/Sidebar";
 
-// 🔐 Check auth
+//  Check auth
 const isAuthenticated = () => {
   return localStorage.getItem("token") !== null;
 };
 
-// 🔐 Protected Route Wrapper
+//  Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
   return isAuthenticated() ? children : <Navigate to="/login" />;
 };
@@ -24,11 +24,11 @@ function App() {
 
       <Routes>
 
-        {/* 🔐 Public Routes */}
+        {/*  Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* 🔐 Protected Routes */}
+        {/*  Protected Routes */}
         <Route
           path="/*"
           element={
