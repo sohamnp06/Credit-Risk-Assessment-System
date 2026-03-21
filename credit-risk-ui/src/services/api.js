@@ -23,3 +23,8 @@ export const getApprovalTrend = async () => {
   const response = await fetch(`${BASE_URL}/approval-trend`);
   return response.json();
 };
+
+export const getModelMetrics = async () => {
+  const response = await fetch(`${BASE_URL}/model-metrics`);
+  return response.json();
+};

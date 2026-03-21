@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, json, request, jsonify
 from src.predictor import predict
 from database.db import insert_prediction
 from flask_cors import CORS
+import os 
 
 app = Flask(__name__)
 CORS(app)
@@ -88,5 +89,21 @@ def approval_trend():
 
     return jsonify(result)
 
+@app.route("/model-metrics", methods=["GET"])
+def model_metrics():
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # 👇 FIXED PATH
+        metrics_path = os.path.join(base_dir, "credit-risk-ui", "metrics.json")
+
+        with open(metrics_path, "r") as f:
+            metrics = json.load(f)
+
+        return jsonify(metrics)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
 if __name__ == '__main__':
     app.run(debug=True)

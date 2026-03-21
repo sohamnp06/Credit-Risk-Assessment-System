@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import NewAssessment from "./pages/NewAssessment";
+import AboutModel from "./pages/AboutModel";   // ✅ NEW IMPORT
 import Sidebar from "./components/Sidebar";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/new" element={<NewAssessment />} />
+            <Route path="/model" element={<AboutModel />} /> {/* ✅ NEW ROUTE */}
           </Routes>
         </div>
 

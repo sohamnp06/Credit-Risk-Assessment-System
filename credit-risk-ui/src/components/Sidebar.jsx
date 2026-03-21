@@ -7,12 +7,26 @@ export default function Sidebar() {
       <h2 className="text-2xl font-bold mb-6">Credit Risk</h2>
 
       <ul className="space-y-4">
+
         <li>
-          <Link to="/" className="hover:text-blue-400">Dashboard</Link>
+          <Link to="/" className="hover:text-blue-400">
+            Dashboard
+          </Link>
         </li>
+
         <li>
-          <Link to="/new" className="hover:text-blue-400">New Assessment</Link>
+          <Link to="/new" className="hover:text-blue-400">
+            New Assessment
+          </Link>
         </li>
+
+        {/* ✅ NEW PAGE */}
+        <li>
+          <Link to="/model" className="hover:text-blue-400">
+            About Model
+          </Link>
+        </li>
+
       </ul>
     </div>
   );
