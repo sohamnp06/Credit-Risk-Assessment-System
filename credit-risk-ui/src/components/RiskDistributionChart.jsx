@@ -9,13 +9,15 @@ import {
 
 export default function RiskDistributionChart({ data }) {
 
+  if (!data) return <p>Loading chart...</p>;
+
   return (
     <div className="bg-white p-4 rounded-xl shadow w-full">
       <h3 className="font-bold mb-3">Risk Distribution</h3>
 
       <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
-          <BarChart data={data || []}>
+          <BarChart data={data}>
             <XAxis dataKey="risk" />
             <YAxis />
             <Tooltip />

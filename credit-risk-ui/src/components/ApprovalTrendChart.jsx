@@ -4,30 +4,29 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Legend
 } from "recharts";
 
-export default function ApprovalTrendChart() {
+export default function ApprovalTrendChart({ data }) {
 
-  const data = [
-    { month: "Jan", rate: 60 },
-    { month: "Feb", rate: 65 },
-    { month: "Mar", rate: 70 },
-    { month: "Apr", rate: 75 },
-    { month: "May", rate: 72 }
-  ];
+  if (!data) return <p>Loading trend...</p>;
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow w-full">
-      <h3 className="font-bold mb-3">Approval Rate Trend</h3>
+    <div className="bg-white p-4 rounded-xl shadow w-full mt-6">
+      <h3 className="font-bold mb-3">Approval Trend</h3>
 
       <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
           <LineChart data={data}>
-            <XAxis dataKey="month" />
+            <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="rate" />
+            <Legend />
+
+            <Line type="monotone" dataKey="approved" />
+            <Line type="monotone" dataKey="defaulted" />
+
           </LineChart>
         </ResponsiveContainer>
       </div>

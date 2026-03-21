@@ -1,29 +1,29 @@
 import { useEffect, useState } from "react";
+import { getDashboardData, getApprovalTrend } from "../services/api";
 import KPICards from "../components/KPICards";
 import RiskDistributionChart from "../components/RiskDistributionChart";
 import ApprovalTrendChart from "../components/ApprovalTrendChart";
-import { getDashboardData } from "../services/api";
 
 export default function Dashboard() {
-
   const [data, setData] = useState(null);
+  const [trend, setTrend] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    fetchDashboard();
   }, []);
 
-  const fetchData = async () => {
+  const fetchDashboard = async () => {
     try {
       const res = await getDashboardData();
       setData(res);
-    } catch (err) {
-      console.error("Dashboard API error:", err);
+
+      const trendRes = await getApprovalTrend();
+      setTrend(trendRes);
+
+    } catch (error) {
+      console.error("Dashboard Error:", error);
     }
   };
-
-  if (!data) {
-    return <p className="p-6">Loading dashboard...</p>;
-  }
 
   return (
     <div className="p-6">
@@ -33,14 +33,11 @@ export default function Dashboard() {
       {/* KPI */}
       <KPICards data={data} />
 
-      {/* Charts */}
-      <div className="grid grid-cols-2 gap-6">
+      {/* Distribution */}
+      <RiskDistributionChart data={data?.risk_distribution} />
 
-        <RiskDistributionChart data={data.risk_distribution} />
-
-        <ApprovalTrendChart />
-
-      </div>
+      {/* Trend */}
+      <ApprovalTrendChart data={trend} />
 
     </div>
   );

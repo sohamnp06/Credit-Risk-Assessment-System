@@ -1,18 +1,16 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import NewAssessment from "./pages/NewAssessment";
+import Sidebar from "./components/Sidebar";
 
 function App() {
   return (
-    <BrowserRouter>
-      <div style={{ display: "flex" }}>
+    <Router>
+      <div className="flex">
 
-        {/* Sidebar */}
         <Sidebar />
 
-        {/* Main Content */}
-        <div style={{ flex: 1, padding: "20px" }}>
+        <div className="flex-1">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/new" element={<NewAssessment />} />
@@ -20,7 +18,7 @@ function App() {
         </div>
 
       </div>
-    </BrowserRouter>
+    </Router>
   );
 }
 

@@ -1,5 +1,6 @@
 const BASE_URL = "http://127.0.0.1:5000";
 
+// Prediction API
 export const predictRisk = async (data) => {
   const response = await fetch(`${BASE_URL}/predict`, {
     method: "POST",
@@ -12,7 +13,13 @@ export const predictRisk = async (data) => {
   return response.json();
 };
 
+// Dashboard API (NEW)
 export const getDashboardData = async () => {
   const response = await fetch(`${BASE_URL}/dashboard`);
+  return response.json();
+};
+
+export const getApprovalTrend = async () => {
+  const response = await fetch(`${BASE_URL}/approval-trend`);
   return response.json();
 };
