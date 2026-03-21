@@ -15,16 +15,31 @@ def insert_prediction(data, prediction, probability):
 
     query = """
     INSERT INTO predictions (
-        age, income, loanamount, creditscore, monthsemployed,
-        numcreditlines, interestrate, loanterm, dtiratio,
+        loan_id, age, income, loanamount, creditscore,
+        monthsemployed, numcreditlines, interestrate, loanterm, dtiratio,
         education, employmenttype, maritalstatus,
         hasmortgage, hasdependents, loanpurpose, hascosigner,
+        loan_to_income, credit_per_line, income_per_employment,
+        interest_burden, high_dti_flag, low_credit_flag,
         prediction, probability
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s,
+            %s, %s)
     """
 
+    # Derived features (IMPORTANT)
+    loan_to_income = data['LoanAmount'] / data['Income'] if data['Income'] != 0 else 0
+    credit_per_line = data['CreditScore'] / data['NumCreditLines'] if data['NumCreditLines'] != 0 else 0
+    income_per_employment = data['Income'] / data['MonthsEmployed'] if data['MonthsEmployed'] != 0 else 0
+    interest_burden = data['LoanAmount'] * (data['InterestRate'] / 100)
+
+    high_dti_flag = 1 if data['DTIRatio'] > 0.4 else 0
+    low_credit_flag = 1 if data['CreditScore'] < 600 else 0
+
     values = (
+        data.get('LoanID', 0),
         data['Age'],
         data['Income'],
         data['LoanAmount'],
@@ -41,6 +56,12 @@ def insert_prediction(data, prediction, probability):
         data['HasDependents'],
         data['LoanPurpose'],
         data['HasCoSigner'],
+        loan_to_income,
+        credit_per_line,
+        income_per_employment,
+        interest_burden,
+        high_dti_flag,
+        low_credit_flag,
         int(prediction),
         float(probability)
     )
