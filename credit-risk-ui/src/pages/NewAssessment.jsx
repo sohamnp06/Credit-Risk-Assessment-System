@@ -67,6 +67,34 @@ export default function NewAssessment() {
     }
   };
 
+  // 🔥 DOWNLOAD PDF FUNCTION
+  const handleDownload = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/download-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          prediction: result.prediction === 1 ? "Default" : "Safe",
+          probability: result.probability,
+          shap_values: result.shap_values,
+          features: formData   // ✅ IMPORTANT
+        })
+      });
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "credit_risk_report.pdf";
+      a.click();
+    } catch (err) {
+      console.error("Download failed", err);
+    }
+  };
+
   const getRiskLevel = (prob) => {
     if (prob < 0.3) return { label: "🟢 LOW RISK", color: "text-green-600" };
     if (prob < 0.6) return { label: "🟡 MEDIUM RISK", color: "text-yellow-500" };
@@ -157,7 +185,7 @@ export default function NewAssessment() {
 
       {/* RESULT */}
       {result && result.probability !== undefined && (
-        <div className="mt-6 bg-white p-5 rounded-xl shadow w-[600px]">
+        <div className="mt-6 bg-white p-5 rounded-xl shadow w-[650px]">
 
           <h2 className="text-xl font-bold mb-2">Assessment Result</h2>
 
@@ -173,11 +201,18 @@ export default function NewAssessment() {
             {getPredictionText(result.prediction)}
           </p>
 
-          {/* BOTH TEXT + GRAPH */}
+          {/* 🔥 DOWNLOAD BUTTON */}
+          <button
+            onClick={handleDownload}
+            className="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Download Report
+          </button>
+
+          {/* SHAP */}
           {result.shap_values && (
             <div className="mt-6 grid grid-cols-2 gap-6">
 
-              {/* TEXT EXPLANATION */}
               <div>
                 <h3 className="font-bold mb-3">Top Risk Factors</h3>
 
@@ -188,7 +223,6 @@ export default function NewAssessment() {
                 ))}
               </div>
 
-              {/* GRAPH */}
               <div>
                 <h3 className="font-bold mb-3">Visual Impact</h3>
                 <ShapChart shapData={result.shap_values} />

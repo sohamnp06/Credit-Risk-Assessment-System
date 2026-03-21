@@ -1,5 +1,5 @@
 import psycopg2
-import os
+import json
 
 def get_connection():
     return psycopg2.connect(
@@ -9,7 +9,10 @@ def get_connection():
         password="root"
     )
 
-def insert_prediction(data, prediction, probability):
+# =========================
+# INSERT PREDICTION (UPDATED)
+# =========================
+def insert_prediction(data, prediction, probability, shap_values):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -21,15 +24,18 @@ def insert_prediction(data, prediction, probability):
         hasmortgage, hasdependents, loanpurpose, hascosigner,
         loan_to_income, credit_per_line, income_per_employment,
         interest_burden, high_dti_flag, low_credit_flag,
-        prediction, probability
+        prediction, probability,
+        shap_values
     )
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s,
-            %s, %s)
+            %s, %s, %s)
     """
 
-    # Derived features (IMPORTANT)
+    # =========================
+    # DERIVED FEATURES
+    # =========================
     loan_to_income = data['LoanAmount'] / data['Income'] if data['Income'] != 0 else 0
     credit_per_line = data['CreditScore'] / data['NumCreditLines'] if data['NumCreditLines'] != 0 else 0
     income_per_employment = data['Income'] / data['MonthsEmployed'] if data['MonthsEmployed'] != 0 else 0
@@ -63,7 +69,8 @@ def insert_prediction(data, prediction, probability):
         high_dti_flag,
         low_credit_flag,
         int(prediction),
-        float(probability)
+        float(probability),
+        json.dumps(shap_values)   # ✅ NEW
     )
 
     cur.execute(query, values)
@@ -71,33 +78,27 @@ def insert_prediction(data, prediction, probability):
 
     cur.close()
     conn.close()
-    
+
+
+# =========================
+# DASHBOARD DATA
+# =========================
 def get_dashboard_data():
     conn = get_connection()
     cur = conn.cursor()
 
-    # Total applications
     cur.execute("SELECT COUNT(*) FROM predictions;")
     total = cur.fetchone()[0]
 
-    # Default count (prediction = 1)
     cur.execute("SELECT COUNT(*) FROM predictions WHERE prediction = 1;")
     defaults = cur.fetchone()[0]
 
-    # Avg probability
     cur.execute("SELECT AVG(probability) FROM predictions;")
     avg_prob = cur.fetchone()[0] or 0
 
-    # Approval rate (prediction = 0)
-    approval_rate = 0
-    if total > 0:
-        approval_rate = round(((total - defaults) / total) * 100, 2)
+    approval_rate = ((total - defaults) / total) * 100 if total > 0 else 0
+    default_rate = (defaults / total) * 100 if total > 0 else 0
 
-    default_rate = 0
-    if total > 0:
-        default_rate = round((defaults / total) * 100, 2)
-
-    # Risk distribution
     cur.execute("""
         SELECT 
             CASE 
@@ -121,8 +122,8 @@ def get_dashboard_data():
 
     return {
         "total": total,
-        "approval_rate": approval_rate,
-        "default_rate": default_rate,
+        "approval_rate": round(approval_rate, 2),
+        "default_rate": round(default_rate, 2),
         "avg_risk": round(avg_prob, 2),
         "risk_distribution": risk_distribution
     }
