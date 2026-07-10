@@ -52,6 +52,14 @@ models/*.joblib
 completeXgboost.pkl
 metrics.json
 
+# =========================
+# 📊 Data & Reports
+# =========================
+data/*.csv
+data/*.xlsx
+data/*.json
+*.pdf
+credit_risk_report.pdf
 
 # =========================
 # 🖥️ IDEs & OS
