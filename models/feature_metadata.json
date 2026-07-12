@@ -1,0 +1,102 @@
+{
+  "target": "Default",
+  "best_model_name": "Logistic Regression",
+  "excluded_identity_features": [
+    "LoanID",
+    "Name-Surname",
+    "Gender"
+  ],
+  "binary_features": [
+    "HasMortgage",
+    "HasDependents",
+    "HasCoSigner"
+  ],
+  "ordinal_features": [
+    "Education",
+    "CreditScore_Bucket",
+    "Income_Group"
+  ],
+  "ordinal_categories": {
+    "Education": [
+      "High School",
+      "Bachelor's",
+      "Master's",
+      "PhD"
+    ],
+    "CreditScore_Bucket": [
+      "Poor",
+      "Fair",
+      "Good",
+      "Very Good",
+      "Excellent"
+    ],
+    "Income_Group": [
+      "Low",
+      "Medium",
+      "High",
+      "Very High"
+    ]
+  },
+  "nominal_features": [
+    "EmploymentType",
+    "MaritalStatus",
+    "LoanPurpose"
+  ],
+  "numerical_features": [
+    "Age",
+    "Income",
+    "LoanAmount",
+    "CreditScore",
+    "MonthsEmployed",
+    "NumCreditLines",
+    "InterestRate",
+    "LoanTerm",
+    "DTIRatio",
+    "Loan_to_Income",
+    "Credit_per_Line",
+    "Income_per_Employment",
+    "Interest_Burden",
+    "Monthly_Income",
+    "Estimated_EMI",
+    "EMI_to_Income",
+    "Disposable_Income",
+    "Income_After_EMI",
+    "Employment_Stability",
+    "Loan_Burden",
+    "High_DTI_Flag",
+    "Low_Credit_Flag"
+  ],
+  "all_input_columns": [
+    "Age",
+    "Income",
+    "LoanAmount",
+    "CreditScore",
+    "MonthsEmployed",
+    "NumCreditLines",
+    "InterestRate",
+    "LoanTerm",
+    "DTIRatio",
+    "Education",
+    "EmploymentType",
+    "MaritalStatus",
+    "HasMortgage",
+    "HasDependents",
+    "LoanPurpose",
+    "HasCoSigner",
+    "Loan_to_Income",
+    "Credit_per_Line",
+    "Income_per_Employment",
+    "Interest_Burden",
+    "High_DTI_Flag",
+    "Low_Credit_Flag",
+    "Monthly_Income",
+    "Estimated_EMI",
+    "EMI_to_Income",
+    "Disposable_Income",
+    "Income_After_EMI",
+    "CreditScore_Bucket",
+    "Income_Group",
+    "Employment_Stability",
+    "Loan_Burden"
+  ]
+}
