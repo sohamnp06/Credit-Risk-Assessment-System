@@ -36,7 +36,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# =========================
 # 📦 Node / Frontend
+# =========================
 node_modules/
 credit-risk-ui/node_modules/
 npm-debug.log*
@@ -49,8 +51,6 @@ yarn-error.log*
 # =========================
 models/*.pkl
 models/*.joblib
-completeXgboost.pkl
-metrics.json
 
 # =========================
 # 📊 Data & Reports
@@ -62,6 +62,21 @@ data/*.json
 credit_risk_report.pdf
 
 # =========================
+# 🏃 Runtime / Logs
+# =========================
+*.log
+logs/
+*.tmp
+*.bak
+
+# =========================
+# 🏗️ Build Output
+# =========================
+credit-risk-ui/dist/
+credit-risk-ui/build/
+static/
+
+# =========================
 # 🖥️ IDEs & OS
 # =========================
 .vscode/
@@ -69,5 +84,8 @@ credit_risk_report.pdf
 .DS_Store
 Thumbs.db
 *.swp
-*.bak
-*.tmp
+
+# =========================
+# 🗄️ Database Flags
+# =========================
+database/seed_done.flag

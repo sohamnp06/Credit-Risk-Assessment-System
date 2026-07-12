@@ -1,224 +1,87 @@
+"""
+Credit Risk Assessment System — Flask Application Entry Point
+Dual Portal: /user (applicants) and /employee (bank staff)
+"""
+
 from flask import Flask, request, jsonify, send_file
-from src.predictor import predict
-from database.db import insert_prediction, get_connection
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from auth import auth
-import os
-import json
-import io
 from dotenv import load_dotenv
-import pickle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+import os
+import io
+import json
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*")
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "super-secret-key")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False  # Tokens don't expire for demo
 
 jwt = JWTManager(app)
-app.register_blueprint(auth, url_prefix="/auth")
 
-@app.route('/')
+# ─── Register Blueprints ─────────────────────────────────────────────────────
+from routes.user_routes     import user_bp
+from routes.employee_routes import employee_bp
+
+app.register_blueprint(user_bp)
+app.register_blueprint(employee_bp)
+
+
+# ─── Health Check ─────────────────────────────────────────────────────────────
+@app.route("/")
 def home():
-    return "Credit Risk API Running (PostgreSQL Connected)"
-
-@app.route('/dashboard', methods=['GET'])
-def dashboard():
-    try:
-        from database.db import get_dashboard_data
-        data = get_dashboard_data()
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-@app.route('/predict', methods=['POST'])
-def get_prediction():
-    try:
-        data = request.get_json()
-
-        if not data:
-            return jsonify({"error": "No input data provided"})
-
-        print("Incoming Data:", data)
-
-        prediction, prob, shap_values = predict(data)
-
-        print("Prediction:", prediction, "Probability:", prob)
-
-        insert_prediction(
-            data,                 
-            prediction,
-            prob,
-            shap_values          
-        )
-
-        return jsonify({
-            "prediction": int(prediction),
-            "probability": float(prob),
-            "shap_values": shap_values
-        })
-
-    except Exception as e:
-        print("ERROR:", str(e))
-        return jsonify({"error": str(e)})
-
-@app.route('/approval-trend', methods=['GET'])
-def approval_trend():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    query = """
-    SELECT 
-        DATE(created_at) as date,
-        SUM(CASE WHEN prediction = 0 THEN 1 ELSE 0 END) as approved,
-        SUM(CASE WHEN prediction = 1 THEN 1 ELSE 0 END) as defaulted
-    FROM predictions
-    GROUP BY DATE(created_at)
-    ORDER BY date;
-    """
-
-    cursor.execute(query)
-    rows = cursor.fetchall()
-
-    result = []
-    for row in rows:
-        result.append({
-            "date": str(row[0]),
-            "approved": int(row[1]),
-            "defaulted": int(row[2])
-        })
-
-    cursor.close()
-    conn.close()
-
-    return jsonify(result)
-
-@app.route("/prediction-history", methods=["GET"])
-def prediction_history():
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        query = """
-        SELECT 
-            id,
-            prediction,
-            probability,
-            created_at,
-            age, income, loanamount, creditscore,
-            monthsemployed, numcreditlines, interestrate,
-            loanterm, dtiratio, education, employmenttype,
-            maritalstatus, hasmortgage, hasdependents,
-            loanpurpose, hascosigner,
-            shap_values
-        FROM predictions
-        ORDER BY created_at DESC
-        LIMIT 100;
-        """
-
-        cursor.execute(query)
-        rows = cursor.fetchall()
-
-        data = []
-
-        for row in rows:
-            features = {
-                "Age": row[4],
-                "Income": row[5],
-                "LoanAmount": row[6],
-                "CreditScore": row[7],
-                "MonthsEmployed": row[8],
-                "NumCreditLines": row[9],
-                "InterestRate": row[10],
-                "LoanTerm": row[11],
-                "DTIRatio": row[12],
-                "Education": row[13],
-                "EmploymentType": row[14],
-                "MaritalStatus": row[15],
-                "HasMortgage": row[16],
-                "HasDependents": row[17],
-                "LoanPurpose": row[18],
-                "HasCoSigner": row[19]
-            }
-
-            shap_values = {}
-            if row[20]:
-                try:
-                    shap_values = json.loads(row[20])
-                except:
-                    shap_values = {}
-
-            data.append({
-                "id": row[0],
-                "prediction": row[1],
-                "probability": float(row[2]),
-                "created_at": row[3],
-                "features": features,          
-                "shap_values": shap_values     
-            })
-
-        cursor.close()
-        conn.close()
-
-        return jsonify(data)
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-@app.route("/model-metrics", methods=["GET"])
-def model_metrics():
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        # Try root directory first, then fallback to credit-risk-ui folder
-        metrics_path = os.path.join(base_dir, "metrics.json")
-        if not os.path.exists(metrics_path):
-            metrics_path = os.path.join(base_dir, "credit-risk-ui", "metrics.json")
-
-        with open(metrics_path, "r") as f:
-            metrics = json.load(f)
-
-        return jsonify(metrics)
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    return jsonify({
+        "status": "running",
+        "system": "Credit Risk Assessment API",
+        "portals": {
+            "user":     "/user/register, /user/login, /user/status",
+            "employee": "/employee/login, /employee/dashboard, /employee/applications, /employee/decide/<id>"
+        }
+    })
 
 
+# ─── PDF Report Download ──────────────────────────────────────────────────────
 @app.route("/download-report", methods=["POST"])
 def download_report():
-    data = request.json
+    data = request.json or {}
 
-    prediction = data.get("prediction")
-    probability = data.get("probability")
-    shap_values = data.get("shap_values", {})
-    features = data.get("features", {})
+    decision     = data.get("decision", "Pending")
+    probability  = data.get("probability", 0)
+    shap_values  = data.get("shap_values", {})
+    features     = data.get("features", {})
+    loan_id      = data.get("loan_id", "N/A")
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer)
+    doc    = SimpleDocTemplate(buffer)
     styles = getSampleStyleSheet()
-
     content = []
 
     content.append(Paragraph("Credit Risk Assessment Report", styles["Title"]))
     content.append(Spacer(1, 12))
+    content.append(Paragraph(f"Loan ID: {loan_id}", styles["Normal"]))
+    content.append(Spacer(1, 8))
 
-    content.append(Paragraph("User Input Features:", styles["Heading2"]))
-    for key, value in features.items():
-        content.append(Paragraph(f"{key}: {value}", styles["Normal"]))
-
+    content.append(Paragraph("Decision:", styles["Heading2"]))
+    content.append(Paragraph(f"Decision: {decision}", styles["Normal"]))
+    content.append(Paragraph(f"Risk Probability: {round(probability * 100, 2)}%", styles["Normal"]))
     content.append(Spacer(1, 12))
 
-    content.append(Paragraph("Prediction Result:", styles["Heading2"]))
-    content.append(Paragraph(f"Prediction: {prediction}", styles["Normal"]))
-    content.append(Paragraph(f"Probability: {round(probability*100,2)}%", styles["Normal"]))
+    if features:
+        content.append(Paragraph("Applicant Information:", styles["Heading2"]))
+        for key, value in features.items():
+            if not key.startswith("_"):
+                content.append(Paragraph(f"{key}: {value}", styles["Normal"]))
+        content.append(Spacer(1, 12))
 
-    content.append(Spacer(1, 12))
-    
-    content.append(Paragraph("SHAP Explanation:", styles["Heading2"]))
-    for key, value in shap_values.items():
-        content.append(Paragraph(f"{key}: {value}", styles["Normal"]))
+    if shap_values:
+        content.append(Paragraph("SHAP Risk Explanation (Top Factors):", styles["Heading2"]))
+        for key, value in shap_values.items():
+            content.append(Paragraph(f"  • {key}: {value}", styles["Normal"]))
 
     doc.build(content)
     buffer.seek(0)
@@ -226,9 +89,10 @@ def download_report():
     return send_file(
         buffer,
         as_attachment=True,
-        download_name="credit_risk_report.pdf",
+        download_name=f"credit_risk_report_{loan_id}.pdf",
         mimetype="application/pdf"
     )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)

@@ -1,28 +1,87 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
+const BASE = "http://localhost:5000";
 
-export const predictRisk = async (data) => {
-  const response = await fetch(`${BASE_URL}/predict`, {
+// ─── Auth Header ──────────────────────────────────────────────────────────────
+const authHeader = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const json = { "Content-Type": "application/json" };
+
+// ─── User Portal API ──────────────────────────────────────────────────────────
+
+export const userRegister = async (payload) => {
+  const res = await fetch(`${BASE}/user/register`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+    headers: json,
+    body: JSON.stringify(payload),
   });
-
-  return response.json();
+  return res.json();
 };
 
-export const getDashboardData = async () => {
-  const response = await fetch(`${BASE_URL}/dashboard`);
-  return response.json();
+export const userLogin = async (payload) => {
+  const res = await fetch(`${BASE}/user/login`, {
+    method: "POST",
+    headers: json,
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 };
 
-export const getApprovalTrend = async () => {
-  const response = await fetch(`${BASE_URL}/approval-trend`);
-  return response.json();
+export const getUserStatus = async () => {
+  const res = await fetch(`${BASE}/user/status`, {
+    headers: { ...authHeader() },
+  });
+  return res.json();
 };
 
-export const getModelMetrics = async () => {
-  const response = await fetch(`${BASE_URL}/model-metrics`);
-  return response.json();
+// ─── Employee Portal API ──────────────────────────────────────────────────────
+
+export const employeeLogin = async (payload) => {
+  const res = await fetch(`${BASE}/employee/login`, {
+    method: "POST",
+    headers: json,
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const getEmployeeDashboard = async () => {
+  const res = await fetch(`${BASE}/employee/dashboard`, {
+    headers: { ...authHeader() },
+  });
+  return res.json();
+};
+
+export const getApplications = async (decision = null) => {
+  const url = decision
+    ? `${BASE}/employee/applications?decision=${decision}`
+    : `${BASE}/employee/applications`;
+  const res = await fetch(url, { headers: { ...authHeader() } });
+  return res.json();
+};
+
+export const getApplicationDetail = async (id) => {
+  const res = await fetch(`${BASE}/employee/application/${id}`, {
+    headers: { ...authHeader() },
+  });
+  return res.json();
+};
+
+export const submitDecision = async (id, decision, note = "") => {
+  const res = await fetch(`${BASE}/employee/decide/${id}`, {
+    method: "POST",
+    headers: { ...json, ...authHeader() },
+    body: JSON.stringify({ decision, note }),
+  });
+  return res.json();
+};
+
+export const downloadReport = async (payload) => {
+  const res = await fetch(`${BASE}/download-report`, {
+    method: "POST",
+    headers: json,
+    body: JSON.stringify(payload),
+  });
+  return res;
 };
