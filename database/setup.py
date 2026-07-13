@@ -35,12 +35,12 @@ def get_conn():
 def drop_old_tables(cur):
     print("  Dropping old tables (if exist)...")
     cur.execute("DROP TABLE IF EXISTS predictions CASCADE;")
-    cur.execute("DROP TABLE IF EXISTS users CASCADE;")
     cur.execute("DROP TABLE IF EXISTS loan_applications CASCADE;")
     cur.execute("DROP TABLE IF EXISTS loan_users CASCADE;")
     cur.execute("DROP TABLE IF EXISTS loan_id_sequence CASCADE;")
     cur.execute("DROP TABLE IF EXISTS employees CASCADE;")
-    cur.execute("DROP TABLE IF EXISTS loan_dataset CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS loan_dataset CASCADE;")  # legacy name
+    cur.execute("DROP TABLE IF EXISTS users CASCADE;")  # dataset archive table
 
 
 def create_tables(cur):
@@ -135,9 +135,9 @@ def create_tables(cur):
         );
     """)
 
-    print("  Creating loan_dataset table...")
+    print("  Creating users table (dataset archive — read-only)...")
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS loan_dataset (
+        CREATE TABLE IF NOT EXISTS users (
             id              SERIAL PRIMARY KEY,
             loan_id_orig    VARCHAR(50),
             age             INTEGER,
@@ -177,11 +177,11 @@ def import_dataset(cur, csv_path):
         print(f"  ⚠ CSV not found at {csv_path}, skipping dataset import.")
         return
 
-    print(f"  Checking if loan_dataset already has data...")
-    cur.execute("SELECT COUNT(*) FROM loan_dataset;")
+    print(f"  Checking if users table already has data...")
+    cur.execute("SELECT COUNT(*) FROM users;")
     count = cur.fetchone()[0]
     if count > 0:
-        print(f"  loan_dataset already has {count} rows — skipping import.")
+        print(f"  users table already has {count} rows -- skipping import.")
         return
 
     print(f"  Importing dataset from {csv_path} ...")
@@ -230,7 +230,7 @@ def import_dataset(cur, csv_path):
 
             if len(batch) >= 500:
                 cur.executemany("""
-                    INSERT INTO loan_dataset (
+                    INSERT INTO users (
                         loan_id_orig, age, income, loan_amount, credit_score,
                         months_employed, num_credit_lines, interest_rate, loan_term,
                         dti_ratio, education, employment_type, marital_status,
@@ -239,11 +239,11 @@ def import_dataset(cur, csv_path):
                 """, batch)
                 total += len(batch)
                 batch = []
-                print(f"    → Imported {total} rows...", end="\r")
+                print(f"    >> Imported {total} rows...", end="\r")
 
         if batch:
             cur.executemany("""
-                INSERT INTO loan_dataset (
+                INSERT INTO users (
                     loan_id_orig, age, income, loan_amount, credit_score,
                     months_employed, num_credit_lines, interest_rate, loan_term,
                     dti_ratio, education, employment_type, marital_status,
@@ -252,7 +252,7 @@ def import_dataset(cur, csv_path):
             """, batch)
             total += len(batch)
 
-    print(f"\n  ✓ Dataset import complete: {total} rows.")
+    print(f"\n  [OK] Dataset import complete: {total} rows into 'users' table.")
 
 
 def setup_db(import_data=True):
@@ -270,7 +270,7 @@ def setup_db(import_data=True):
         seed_employees(cur)
 
         if import_data:
-            print("\n[4/4] Importing dataset...")
+            print("\n[4/4] Importing dataset into 'users' table...")
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             csv_path = os.path.join(base_dir, "data", "loanDefaulter.csv")
             import_dataset(cur, csv_path)
@@ -278,11 +278,13 @@ def setup_db(import_data=True):
             print("\n[4/4] Skipping dataset import (import_data=False).")
 
         conn.commit()
-        print("\n✅ Database setup complete!\n")
+        print("\n[OK] Database setup complete!")
+        print("   Tables: loan_users, loan_id_sequence, loan_applications, employees, users")
+        print()
 
     except Exception as e:
         conn.rollback()
-        print(f"\nERROR Setup failed: {e}")
+        print(f"\n[ERR] Setup failed: {e}")
         raise
     finally:
         cur.close()

@@ -115,6 +115,28 @@ def compute_emi(principal: float, annual_rate_pct: float, months: int) -> float:
 
 # ─── Main Feature Engine ──────────────────────────────────────────────────────
 
+# ─── Education Normalization ─────────────────────────────────────────────────
+
+EDUCATION_NORMALIZE = {
+    "Bachelor's": "Bachelor",
+    "Master's":   "Master",
+    "bachelor's": "Bachelor",
+    "master's":   "Master",
+    # pass-through values (already correct):
+    "Bachelor":   "Bachelor",
+    "Master":     "Master",
+    "High School": "High School",
+    "PhD":         "PhD",
+}
+
+
+def normalize_education(value: str) -> str:
+    """Normalize education label to match ManualEncoder expectations."""
+    return EDUCATION_NORMALIZE.get(value, value)
+
+
+# ─── Main Feature Engine ──────────────────────────────────────────────────────
+
 def compute_all_features(user_inputs: dict) -> dict:
     """
     Takes 13 user-input fields + simulated bureau data and returns
@@ -129,7 +151,8 @@ def compute_all_features(user_inputs: dict) -> dict:
     """
     age             = int(user_inputs["age"])
     income          = float(user_inputs["annual_income"])
-    education       = user_inputs["education"]
+    # Normalize education to match ManualEncoder mapping in pipeline
+    education       = normalize_education(user_inputs["education"])
     employment_type = user_inputs["employment_type"]
     months_employed = int(user_inputs["months_employed"])
     monthly_debt    = float(user_inputs["existing_monthly_debt"])
