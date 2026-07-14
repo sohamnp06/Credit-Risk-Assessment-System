@@ -43,55 +43,45 @@ def drop_old_tables(cur):
     cur.execute("DROP TABLE IF EXISTS users CASCADE;")  # dataset archive table
 
 
+from datetime import datetime
+
 def create_tables(cur):
-    print("  Creating loan_users table...")
+    print("  Creating employees table...")
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS loan_users (
-            loan_id     VARCHAR(20) PRIMARY KEY,
-            full_name   VARCHAR(255) NOT NULL,
+        CREATE TABLE IF NOT EXISTS employees (
+            id            SERIAL PRIMARY KEY,
+            username      VARCHAR(100) UNIQUE NOT NULL,
             password_hash BYTEA NOT NULL,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            date          VARCHAR(50)
         );
     """)
 
-    print("  Creating loan_id_sequence table...")
+    print("  Creating users table...")
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS loan_id_sequence (
-            id SERIAL PRIMARY KEY,
-            last_val INTEGER NOT NULL DEFAULT 0
-        );
-    """)
-    # Insert initial row if not present
-    cur.execute("SELECT COUNT(*) FROM loan_id_sequence;")
-    if cur.fetchone()[0] == 0:
-        cur.execute("INSERT INTO loan_id_sequence (last_val) VALUES (0);")
-
-    print("  Creating loan_applications table...")
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS loan_applications (
-            id                  SERIAL PRIMARY KEY,
-            loan_id             VARCHAR(20) NOT NULL REFERENCES loan_users(loan_id),
-
-            -- User-entered fields (13 ML features)
-            age                 INTEGER,
-            annual_income       FLOAT,
-            education           VARCHAR(100),
-            employment_type     VARCHAR(100),
-            months_employed     INTEGER,
-            existing_monthly_debt FLOAT,
-            loan_amount         FLOAT,
-            loan_purpose        VARCHAR(100),
-            loan_term           INTEGER,
-            marital_status      VARCHAR(100),
-            has_mortgage        INTEGER,
-            has_dependents      INTEGER,
-            has_cosigner        INTEGER,
-
-            -- Bureau-simulated fields
-            credit_score        INTEGER,
-            num_credit_lines    INTEGER,
-            interest_rate       FLOAT,
-            dti_ratio           FLOAT,
+        CREATE TABLE IF NOT EXISTS users (
+            id              SERIAL PRIMARY KEY,
+            loan_id         VARCHAR(50) UNIQUE NOT NULL,
+            full_name       VARCHAR(255) NOT NULL,
+            password_hash   BYTEA,
+            gender          VARCHAR(50),
+            age             INTEGER,
+            income          FLOAT,
+            loan_amount     FLOAT,
+            credit_score    INTEGER,
+            months_employed INTEGER,
+            num_credit_lines INTEGER,
+            interest_rate   FLOAT,
+            loan_term       INTEGER,
+            dti_ratio       FLOAT,
+            education       VARCHAR(100),
+            employment_type VARCHAR(100),
+            marital_status  VARCHAR(100),
+            has_mortgage    INTEGER,
+            has_dependents  INTEGER,
+            loan_purpose    VARCHAR(100),
+            has_cosigner    INTEGER,
+            default_flag    INTEGER,
 
             -- Derived features
             loan_to_income          FLOAT,
@@ -110,53 +100,18 @@ def create_tables(cur):
             employment_stability    FLOAT,
             loan_burden             FLOAT,
 
-            -- ML Output
+            -- ML Output & Decision
             ml_prediction       INTEGER,
             ml_probability      FLOAT,
             shap_values         TEXT,
 
-            -- Employee Decision
             decision            VARCHAR(20) DEFAULT 'pending',
             decided_by          VARCHAR(255),
             decision_note       TEXT,
             decided_at          TIMESTAMP,
 
+            date                DATE,
             created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-
-    print("  Creating employees table...")
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS employees (
-            id          SERIAL PRIMARY KEY,
-            username    VARCHAR(100) UNIQUE NOT NULL,
-            password_hash BYTEA NOT NULL,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-
-    print("  Creating users table (dataset archive — read-only)...")
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id              SERIAL PRIMARY KEY,
-            loan_id_orig    VARCHAR(50),
-            age             INTEGER,
-            income          FLOAT,
-            loan_amount     FLOAT,
-            credit_score    INTEGER,
-            months_employed INTEGER,
-            num_credit_lines INTEGER,
-            interest_rate   FLOAT,
-            loan_term       INTEGER,
-            dti_ratio       FLOAT,
-            education       VARCHAR(100),
-            employment_type VARCHAR(100),
-            marital_status  VARCHAR(100),
-            has_mortgage    INTEGER,
-            has_dependents  INTEGER,
-            loan_purpose    VARCHAR(100),
-            has_cosigner    INTEGER,
-            default_flag    INTEGER
         );
     """)
 
@@ -207,35 +162,108 @@ def import_dataset(cur, csv_path):
                     return 1 if v.strip().lower() in ('yes', '1', 'true') else 0
                 return int(v) if v is not None else 0
 
+            # Parse date
+            date_str = row.get('Date', '')
+            parsed_date = None
+            if date_str:
+                try:
+                    parsed_date = datetime.strptime(date_str.strip(), '%d-%m-%Y').date()
+                except:
+                    try:
+                        parsed_date = datetime.strptime(date_str.strip(), '%Y-%m-%d').date()
+                    except:
+                        parsed_date = None
+
+            default_val = safe_int(row.get('Default', 0)) or 0
+            decision_val = 'rejected' if default_val == 1 else 'approved'
+
+            # Pre-populate some derived calculations if they exist in CSV, otherwise calculate them
+            income = safe_float(row.get('Income'))
+            loan_amount = safe_float(row.get('LoanAmount'))
+            interest_rate = safe_float(row.get('InterestRate'))
+            loan_term = safe_int(row.get('LoanTerm'))
+            dti_ratio = safe_float(row.get('DTIRatio'))
+            credit_score = safe_int(row.get('CreditScore'))
+            num_credit_lines = safe_int(row.get('NumCreditLines'))
+            months_employed = safe_int(row.get('MonthsEmployed'))
+            employment_type = row.get('EmploymentType', '')
+
+            loan_to_income = safe_float(row.get('Loan_to_Income')) or (loan_amount / income if income and loan_amount else 0.0)
+            credit_per_line = safe_float(row.get('Credit_per_Line')) or (credit_score / (num_credit_lines + 1) if credit_score and num_credit_lines is not None else 0.0)
+            income_per_employment = safe_float(row.get('Income_per_Employment')) or (income / (months_employed + 1) if income and months_employed is not None else 0.0)
+            interest_burden = safe_float(row.get('Interest_Burden')) or (interest_rate * loan_term if interest_rate and loan_term else 0.0)
+            high_dti_flag = safe_int(row.get('High_DTI_Flag')) or (1 if dti_ratio and dti_ratio > 0.4 else 0)
+            low_credit_flag = safe_int(row.get('Low_Credit_Flag')) or (1 if credit_score and credit_score < 600 else 0)
+
+            monthly_income = income / 12.0 if income else 0.0
+            estimated_emi = (loan_amount * (interest_rate / 1200) * ((1 + interest_rate / 1200) ** loan_term) / (((1 + interest_rate / 1200) ** loan_term) - 1)) if loan_amount and interest_rate and loan_term else 0.0
+            emi_to_income = estimated_emi / monthly_income if monthly_income else 0.0
+            disposable_income = income - (income * dti_ratio) if income and dti_ratio else 0.0
+            income_after_emi = disposable_income - estimated_emi
+
+            creditscore_bucket = "Poor" if credit_score and credit_score < 550 else "Fair" if credit_score and credit_score < 650 else "Good" if credit_score and credit_score < 750 else "Very Good" if credit_score and credit_score < 800 else "Excellent"
+            income_group = "Low" if income and income < 30000 else "Medium" if income and income < 70000 else "High" if income and income < 150000 else "Very High"
+            emp_weight = 1.0 if employment_type == "Salaried" else 0.7 if employment_type == "Self-Employed" else 0.2
+            employment_stability = months_employed * emp_weight if months_employed else 0.0
+            loan_burden = loan_to_income
+
             batch.append((
                 row.get('LoanID', ''),
+                row.get('Name-Surname', 'Unknown Applicant'),
+                row.get('Gender', 'Unknown'),
                 safe_int(row.get('Age')),
-                safe_float(row.get('Income')),
-                safe_float(row.get('LoanAmount')),
-                safe_int(row.get('CreditScore')),
-                safe_int(row.get('MonthsEmployed')),
-                safe_int(row.get('NumCreditLines')),
-                safe_float(row.get('InterestRate')),
-                safe_int(row.get('LoanTerm')),
-                safe_float(row.get('DTIRatio')),
+                income,
+                loan_amount,
+                credit_score,
+                months_employed,
+                num_credit_lines,
+                interest_rate,
+                loan_term,
+                dti_ratio,
                 row.get('Education', ''),
-                row.get('EmploymentType', ''),
+                employment_type,
                 row.get('MaritalStatus', ''),
                 yesno(row.get('HasMortgage', 0)),
                 yesno(row.get('HasDependents', 0)),
                 row.get('LoanPurpose', ''),
                 yesno(row.get('HasCoSigner', 0)),
-                safe_int(row.get('Default', 0)),
+                default_val,
+                loan_to_income,
+                credit_per_line,
+                income_per_employment,
+                interest_burden,
+                high_dti_flag,
+                low_credit_flag,
+                monthly_income,
+                estimated_emi,
+                emi_to_income,
+                disposable_income,
+                income_after_emi,
+                creditscore_bucket,
+                income_group,
+                employment_stability,
+                loan_burden,
+                default_val,            # ml_prediction (map from Default)
+                float(default_val),     # ml_probability (1.0 or 0.0)
+                '{}',                   # shap_values
+                decision_val,           # decision
+                parsed_date             # date
             ))
 
             if len(batch) >= 500:
                 cur.executemany("""
                     INSERT INTO users (
-                        loan_id_orig, age, income, loan_amount, credit_score,
+                        loan_id, full_name, gender, age, income, loan_amount, credit_score,
                         months_employed, num_credit_lines, interest_rate, loan_term,
                         dti_ratio, education, employment_type, marital_status,
-                        has_mortgage, has_dependents, loan_purpose, has_cosigner, default_flag
-                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        has_mortgage, has_dependents, loan_purpose, has_cosigner, default_flag,
+                        loan_to_income, credit_per_line, income_per_employment,
+                        interest_burden, high_dti_flag, low_credit_flag,
+                        monthly_income, estimated_emi, emi_to_income,
+                        disposable_income, income_after_emi,
+                        creditscore_bucket, income_group, employment_stability, loan_burden,
+                        ml_prediction, ml_probability, shap_values, decision, date
+                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """, batch)
                 total += len(batch)
                 batch = []
@@ -244,11 +272,17 @@ def import_dataset(cur, csv_path):
         if batch:
             cur.executemany("""
                 INSERT INTO users (
-                    loan_id_orig, age, income, loan_amount, credit_score,
+                    loan_id, full_name, gender, age, income, loan_amount, credit_score,
                     months_employed, num_credit_lines, interest_rate, loan_term,
                     dti_ratio, education, employment_type, marital_status,
-                    has_mortgage, has_dependents, loan_purpose, has_cosigner, default_flag
-                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    has_mortgage, has_dependents, loan_purpose, has_cosigner, default_flag,
+                    loan_to_income, credit_per_line, income_per_employment,
+                    interest_burden, high_dti_flag, low_credit_flag,
+                    monthly_income, estimated_emi, emi_to_income,
+                    disposable_income, income_after_emi,
+                    creditscore_bucket, income_group, employment_stability, loan_burden,
+                    ml_prediction, ml_probability, shap_values, decision, date
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """, batch)
             total += len(batch)
 
@@ -279,7 +313,7 @@ def setup_db(import_data=True):
 
         conn.commit()
         print("\n[OK] Database setup complete!")
-        print("   Tables: loan_users, loan_id_sequence, loan_applications, employees, users")
+        print("   Tables: employees, users")
         print()
 
     except Exception as e:
@@ -295,3 +329,4 @@ if __name__ == "__main__":
     # Pass --no-import to skip CSV import (faster for testing)
     import_data = "--no-import" not in sys.argv
     setup_db(import_data=import_data)
+

@@ -159,7 +159,7 @@ export default function EmployeeDashboard() {
                       </div>
                     </td>
                     <td>{BADGE[app.decision] || app.decision}</td>
-                    <td style={{ fontSize: "0.78rem" }}>{app.created_at?.split("T")[0]}</td>
+                    <td style={{ fontSize: "0.78rem" }}>{app.date || app.created_at?.split("T")[0]}</td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); nav(`/employee/review/${app.id}`); }}>
                         Review →

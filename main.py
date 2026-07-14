@@ -24,6 +24,12 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False  # Tokens don't expire for demo
 
 jwt = JWTManager(app)
 
+@jwt.user_identity_loader
+def user_identity_lookup(identity):
+    if isinstance(identity, dict):
+        return json.dumps(identity)
+    return str(identity)
+
 # ─── Register Blueprints ─────────────────────────────────────────────────────
 from routes.user_routes     import user_bp
 from routes.employee_routes import employee_bp

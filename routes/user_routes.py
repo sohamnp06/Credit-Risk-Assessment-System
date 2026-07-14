@@ -19,6 +19,18 @@ from src.predictor import predict
 user_bp = Blueprint("user", __name__, url_prefix="/user")
 
 
+def _get_identity():
+    from flask_jwt_extended import get_jwt_identity
+    import json
+    identity = get_jwt_identity()
+    if isinstance(identity, str):
+        try:
+            return json.loads(identity)
+        except Exception:
+            return identity
+    return identity
+
+
 @user_bp.route("/register", methods=["POST"])
 def register():
     """
@@ -116,7 +128,7 @@ def login():
     # Try password against all matching users
     matched = None
     for u in candidates:
-        if bcrypt.checkpw(password.encode("utf-8"), u["password_hash"]):
+        if u["password_hash"] and bcrypt.checkpw(password.encode("utf-8"), u["password_hash"]):
             matched = u
             break
 
@@ -139,7 +151,7 @@ def status():
     Return the loan application status for the logged-in user.
     Header: Authorization: Bearer <token>
     """
-    identity = get_jwt_identity()
+    identity = _get_identity()
     loan_id  = identity.get("loan_id")
     if not loan_id:
         return jsonify({"error": "Invalid token"}), 401

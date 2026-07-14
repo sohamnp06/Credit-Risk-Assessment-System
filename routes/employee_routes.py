@@ -22,6 +22,18 @@ from database.db import (
 employee_bp = Blueprint("employee", __name__, url_prefix="/employee")
 
 
+def _get_identity():
+    from flask_jwt_extended import get_jwt_identity
+    import json
+    identity = get_jwt_identity()
+    if isinstance(identity, str):
+        try:
+            return json.loads(identity)
+        except Exception:
+            return identity
+    return identity
+
+
 def _require_employee(identity):
     """Validate that the JWT belongs to an employee role."""
     if not identity or identity.get("role") != "employee":
@@ -64,7 +76,7 @@ def login():
 @jwt_required()
 def dashboard():
     """Return aggregate stats for the employee dashboard."""
-    identity = get_jwt_identity()
+    identity = _get_identity()
     if not _require_employee(identity):
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -79,7 +91,7 @@ def list_applications():
     List all loan applications.
     Query param: ?decision=pending|approved|rejected|hold  (optional)
     """
-    identity = get_jwt_identity()
+    identity = _get_identity()
     if not _require_employee(identity):
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -92,7 +104,7 @@ def list_applications():
 @jwt_required()
 def get_application(app_id):
     """Get a single application's full detail."""
-    identity = get_jwt_identity()
+    identity = _get_identity()
     if not _require_employee(identity):
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -116,7 +128,7 @@ def decide(app_id):
     Make a lending decision on an application.
     Body: {decision: 'approved'|'rejected'|'hold', note: '...'}
     """
-    identity = get_jwt_identity()
+    identity = _get_identity()
     if not _require_employee(identity):
         return jsonify({"error": "Unauthorized"}), 403
 
