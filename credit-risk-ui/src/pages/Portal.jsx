@@ -114,14 +114,7 @@ export default function Portal() {
             </button>
           </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "1rem" }}>
-            {["AI Risk Assessment", "SHAP Explanation", "Real-time Status"].map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6" }} />
-                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>{f}</span>
-              </div>
-            ))}
-          </div>
+
         </div>
 
         {/* Employee Portal */}
@@ -182,14 +175,7 @@ export default function Portal() {
             🔐 Employee Login
           </button>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "1rem" }}>
-            {["Review All Applications", "SHAP AI Explanations", "Approve / Reject / Hold"].map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8b5cf6" }} />
-                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>{f}</span>
-              </div>
-            ))}
-          </div>
+
         </div>
       </div>
 

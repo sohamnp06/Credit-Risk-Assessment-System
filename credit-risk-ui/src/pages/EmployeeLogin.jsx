@@ -98,15 +98,7 @@ export default function EmployeeLogin() {
             </button>
           </form>
 
-          {/* Hint for demo */}
-          <div style={{ marginTop: "1.5rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "0.875rem" }}>
-            <p style={{ color: "#334155", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Demo Credentials</p>
-            {[["admin", "admin"], ["soham", "soham"], ["bank", "bank"]].map(([u, p]) => (
-              <div key={u} style={{ display: "flex", justifyContent: "space-between", color: "#334155", fontSize: "0.8rem", padding: "0.2rem 0" }}>
-                <span className="mono">{u}</span><span className="mono">{p}</span>
-              </div>
-            ))}
-          </div>
+
         </div>
 
         <div style={{ textAlign: "center", marginTop: "1.25rem" }}>

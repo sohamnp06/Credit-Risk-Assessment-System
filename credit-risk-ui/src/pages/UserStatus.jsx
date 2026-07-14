@@ -129,7 +129,7 @@ export default function UserStatus() {
             </div>
 
             {/* Risk Indicator */}
-            <div style={{ background: "rgba(13,20,36,0.9)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 18, padding: "1.75rem" }}>
+            <div style={{ background: "rgba(13,20,36,0.9)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 18, padding: "1.75rem", marginBottom: data.decision === "rejected" && data.shap_values && Object.keys(data.shap_values).length > 0 ? "1.25rem" : 0 }}>
               <p className="section-title">🤖 AI Risk Assessment</p>
               <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
                 <div style={{ textAlign: "center" }}>
@@ -152,6 +152,34 @@ export default function UserStatus() {
                 </div>
               </div>
             </div>
+
+            {/* SHAP Explanation — only shown when rejected */}
+            {data.decision === "rejected" && data.shap_values && Object.keys(data.shap_values).length > 0 && (
+              <div style={{ background: "rgba(244,63,94,0.04)", border: "1px solid rgba(244,63,94,0.15)", borderRadius: 18, padding: "1.75rem" }}>
+                <p className="section-title" style={{ color: "#fb7185" }}>📊 Why Your Application Was Rejected</p>
+                <p style={{ color: "#64748b", fontSize: "0.8rem", marginBottom: "1rem" }}>
+                  These are the top factors that contributed to the rejection decision:
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                  {Object.entries(data.shap_values).map(([feat, info]) => {
+                    const isRisk = info.direction?.includes("↑");
+                    const barColor = isRisk ? "#f43f5e" : "#10b981";
+                    const pct = Math.min(100, Math.abs(info.value || 0) * 100);
+                    return (
+                      <div key={feat} style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: "0.75rem 1rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                          <span style={{ color: "#94a3b8", fontSize: "0.82rem", fontWeight: 600 }}>{feat}</span>
+                          <span style={{ color: barColor, fontSize: "0.78rem", fontWeight: 700 }}>{info.label}</span>
+                        </div>
+                        <div style={{ height: 4, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${Math.max(5, pct)}%`, background: barColor, borderRadius: 99, transition: "width 1s ease" }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
 

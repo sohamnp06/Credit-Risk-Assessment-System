@@ -148,8 +148,9 @@ def status():
     if not application:
         return jsonify({"error": "No application found for this Loan ID"}), 404
 
-    # Return safe subset for user view (no SHAP internals unless needed)
-    return jsonify({
+    # Return safe subset for user view
+    # Only expose SHAP values when the application was rejected
+    response = {
         "loan_id":        application["loan_id"],
         "application_id": application["id"],
         "decision":       application["decision"],
@@ -162,4 +163,9 @@ def status():
         "loan_purpose":   application["loan_purpose"],
         "loan_term":      application["loan_term"],
         "created_at":     application["created_at"],
-    }), 200
+    }
+    # Expose SHAP explanations only for rejected applications
+    if application["decision"] == "rejected":
+        response["shap_values"] = application.get("shap_values", {})
+
+    return jsonify(response), 200

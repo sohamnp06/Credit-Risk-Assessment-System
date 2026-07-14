@@ -17,7 +17,7 @@ from reportlab.lib import colors
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app, origins="*", supports_credentials=True)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False  # Tokens don't expire for demo
@@ -95,4 +95,4 @@ def download_report():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)

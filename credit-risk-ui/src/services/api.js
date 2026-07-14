@@ -1,4 +1,5 @@
-const BASE = "http://localhost:5000";
+// All requests go through the Vite dev proxy → Flask backend at 127.0.0.1:5000
+const BASE = "";
 
 // ─── Auth Header ──────────────────────────────────────────────────────────────
 const authHeader = () => {
