@@ -52,14 +52,6 @@ yarn-error.log*
 models/*.pkl
 models/*.joblib
 
-# =========================
-# 📊 Data & Reports
-# =========================
-data/*.csv
-data/*.xlsx
-data/*.json
-*.pdf
-credit_risk_report.pdf
 
 # =========================
 # 🏃 Runtime / Logs
